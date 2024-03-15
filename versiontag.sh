@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 echo "Enter the version number:"
 read version
 echo "Triggering workflow with version $version..."
