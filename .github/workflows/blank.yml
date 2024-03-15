@@ -1,26 +1,43 @@
-name: for Input
+name: Create Tag and Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version and Release number'
+      tag_name:
+        description: 'Enter tag name to be created'
         required: true
-      release_branch:
-        description: 'Release branch name'
+      release_name:
+        description: 'Enter the release branch name'
         required: true
         
+# jobs:
+#   example-job:
+#     runs-on: ubuntu-latest
+#     steps:
+#     # - name: versiontag.sh
+#     #   run: |
+#     #     chmod +x ./versiontag.sh
+#     #     ./versiontag.sh
+#     - name: Checkout code
+#       uses: actions/checkout@v2
+#     - name: Print the version number
+#       run: echo "Version number is ${{ github.event.inputs.version }}"
+#     - name: Print the release number
+#       run: echo "Release number is ${{ github.event.inputs.release_branch }}"
 jobs:
-  example-job:
+  build:
     runs-on: ubuntu-latest
     steps:
-    # - name: versiontag.sh
-    #   run: |
-    #     chmod +x ./versiontag.sh
-    #     ./versiontag.sh
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Print the version number
-      run: echo "Version number is ${{ github.event.inputs.version }}"
-    - name: Print the release number
-      run: echo "Release number is ${{ github.event.inputs.release_branch }}"
-
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag_name }}
+          release_name: Release ${{ github.event.inputs.tag_name }}
+          body: |
+            Changelog:
+            - Added new feature
+            - Fixed bugs
+          draft: false
+          prerelease: false
