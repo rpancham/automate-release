@@ -5,7 +5,7 @@ on:
       version:
         description: 'Version and Release number'
         required: true
-      release branch:
+      release_branch:
         description: 'Release branch name'
         required: true
         
@@ -13,14 +13,14 @@ jobs:
   example-job:
     runs-on: ubuntu-latest
     steps:
-    - name: versiontag.sh
-      run: |
-        chmod +x ./versiontag.sh
-        ./versiontag.sh
+    # - name: versiontag.sh
+    #   run: |
+    #     chmod +x ./versiontag.sh
+    #     ./versiontag.sh
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Print the version number
       run: echo "Version number is ${{ github.event.inputs.version }}"
     - name: Print the release number
-      run: echo "Release number is ${{ github.event.inputs.version }}"
+      run: echo "Release number is ${{ github.event.inputs.release_branch }}"
 
