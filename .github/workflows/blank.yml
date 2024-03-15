@@ -5,7 +5,10 @@ on:
       version:
         description: 'Version and Release number'
         required: true
-        default: '1.0.0'
+      release branch:
+        description: 'Release branch name'
+        required: true
+        
 jobs:
   example-job:
     runs-on: ubuntu-latest
