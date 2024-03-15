@@ -1,7 +1,7 @@
 name: Create Release
 
 on:
-  push
+ push
   workflow_dispatch:
     inputs:
       version:
