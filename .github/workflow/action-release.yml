@@ -1,0 +1,48 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+      release_branch:
+        description: 'Release branch (e.g., opendatahub-io/kserve release-v0.11.1)'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prompt for version input
+        id: prompt_version
+        run: |
+          echo "Enter the version to release (e.g., v0.11.1.4):"
+          read VERSION
+          echo "::set-output name=version::$VERSION"
+      
+      - name: Prompt for release branch
+        id: prompt_branch
+        run: |
+          echo "Enter the release branch (e.g., opendatahub-io/kserve release-v0.11.1):"
+          read RELEASE_BRANCH
+          echo "::set-output name=branch::$RELEASE_BRANCH"
+
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          PREVIOUS_TAG=$(curl -s -H "Authorization: token $TOKEN" "https://api.github.com/repos/${{ github.repository }}/git/refs/tags" | jq -r '.[] | select(.ref | contains($RELEASE_BRANCH)) | .ref' | cut -d '/' -f 3)
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "::set-output name=previous_tag::$PREVIOUS_TAG"
+
+      - name: Verify Token
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        with:
+          tag_name: ${{ steps.prompt_version.outputs.version }}
+          release_name: Release ${{ steps.prompt_version.outputs.version }}
+          body: |
+            Your changelog content here new release
+          draft: false
+          prerelease: false
