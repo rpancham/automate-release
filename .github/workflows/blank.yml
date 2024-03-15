@@ -1,4 +1,4 @@
-name:for Input
+name: for Input
 on:
   workflow_dispatch:
     inputs:
