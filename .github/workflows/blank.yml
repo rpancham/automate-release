@@ -69,9 +69,10 @@ jobs:
       - name: Print
         id: print
         run: |       
-           echo $tag_name
-           echo $name
-           echo $body
+          echo "tag_name: $version"
+          echo "name: $version"
+          echo "body: $notes"
+
   
   
   
