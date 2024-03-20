@@ -67,7 +67,7 @@ jobs:
           tag_name: ${{ github.event.inputs.tag_name }}
           prerelease: false
           draft: false
-          files: bin/*
+          # files: bin/*
           generate_release_notes: true
           name: ${{ github.ref }}
           body: |
