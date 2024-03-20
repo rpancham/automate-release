@@ -51,12 +51,7 @@ jobs:
         with:
           # you can also create separate token to trace action
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Print
-        id: print
-        run: |       
-         echo ${{ steps.changelog.outputs.tag }}
-         echo ${{ steps.changelog.outputs.tag }}
-         echo ${{steps.changelog.outputs.clean_changelog}}
+     
       - name: create release notes
         # https://github.com/actions/create-release-notes
         uses: softprops/action-gh-release@v1
@@ -70,7 +65,13 @@ jobs:
             body: ${{steps.changelog.outputs.clean_changelog}}
             draft: false
             prerelease: false
-       
+
+      - name: Print
+        id: print
+        run: |       
+           echo $tag_name
+           echo $name
+           echo $body
   
   
   
