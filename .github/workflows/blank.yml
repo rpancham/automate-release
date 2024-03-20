@@ -73,11 +73,11 @@ jobs:
           name: ${{ github.event.inputs.tag_name }}
           body: |
             <details>
-              <summary>Whats Changed</summary>
+              ## Whats Changed
               
               <summary>kserve/kserve</summary>
-              https://github.com/kserve/kserve/releases/tag/${{ env.fromTag }}
-              
+              https://github.com/kserve/kserve/releases/tag/${{ needs.changelog.outputs.fromTag }}
+              ${{ needs.changelog.outputs }}
             ${{ env.changelog }}
             </details>
     
