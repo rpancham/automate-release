@@ -50,7 +50,7 @@ jobs:
 
       - name: Set Changelog Output
         if: steps.build_changelog.outputs.changelog != ''
-        run: echo "changelog=${{ steps.build_changelog.outputs.changelog }}" >> $GITHUB_ENV
+        run: echo "changelog=${{ steps.build_changelog.outputs }}" >> $GITHUB_ENV
   
   release:
     name: Release
@@ -73,12 +73,12 @@ jobs:
           name: ${{ github.event.inputs.tag_name }}
           body: |
             <details>
-              ## Whats Changed
+              <summary>   ## Whats Changed </summary>
               
-              <summary>kserve/kserve</summary>
-              https://github.com/kserve/kserve/releases/tag/${{ needs.changelog.outputs.fromTag }}
-              ${{ needs.changelog.outputs }}
-            ${{ env.changelog }}
+              <summary> kserve/kserve </summary>
+              https://github.com/kserve/kserve/releases/tag/${{ env.outputs.fromTag }}
+              ${{ env.outputs }}
+            ${{ env.outputs.changelog }}
             </details>
     
   # changelog:
