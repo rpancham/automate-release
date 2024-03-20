@@ -41,3 +41,16 @@ jobs:
             - Fixed bugs
           draft: false
           prerelease: false
+      - name: "Complex Configuration"
+        id: build_changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/release-changelog-builder-action@{latest-release}
+        with:
+          # configuration: "configuration_complex.json"
+          # owner: "mikepenz"
+          repo: "release-changelog-builder-action"
+          ignorePreReleases: "false"
+          fromTag: "v0.11.1.6"
+          toTag: "v0.11.1.7"
+          token: ${{ secrets.TOKEN }}
+  
