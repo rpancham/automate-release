@@ -41,16 +41,30 @@ jobs:
             - Fixed bugs
           draft: false
           prerelease: false
-      - name: "Complex Configuration"
-        id: build_changelog
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/build_changelog@{latest-release}
+      - name: Generate Release Notes
+        id: generate_release_notes
+        run: |
+          # Fetch the latest tag before yours
+          latest_tag=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))
+      
+          # Generate release notes between the latest tag and the current tag
+          git log --oneline $latest_tag..HEAD > release_notes.txt
+      
+          # Output the latest tag for reference in the next steps
+          echo "::set-output name=latest_tag::$latest_tag"
+          echo "::set-output name=release_notes_file_path::release_notes.txt"
+      - name: Create Release Notes
+        id: create_release_notes
+        uses: actions/create-release-notes@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # configuration: "configuration_complex.json"
-          # owner: "rpancham"
-          # repo: "automate-release"
-          ignorePreReleases: "false"
-          fromTag: "v0.11.1.6"
-          toTag: "v0.11.1.7"
-          token: ${{ secrets.TOKEN }}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body_path: ${{ steps.generate_release_notes.outputs.release_notes_file_path }}
+          draft: false
+          prerelease: false
+
+
+
   
