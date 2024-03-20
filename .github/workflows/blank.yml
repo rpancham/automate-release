@@ -44,7 +44,7 @@ jobs:
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v1
         with:
-          tag: tag_name
+          tag: ${{ github.event.inputs.tag_name }}
           token: ${{ github.TOKEN }}
 
       - name: Set Changelog Output
@@ -64,7 +64,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ github.TOKEN }}
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.event.inputs.tag_name }}
           prerelease: false
           draft: false
           # files: bin/*
