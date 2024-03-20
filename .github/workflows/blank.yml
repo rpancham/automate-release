@@ -69,11 +69,10 @@ jobs:
       - name: Print
         id: print
         run: |       
-          echo "tag_name: $version"
-          echo "name: $version"
-          echo "body: $notes"
-
-  
+         echo "tag_name: ${{ steps.changelog.outputs.tag }}"
+         echo "name: ${{ steps.changelog.outputs.tag }}"
+         echo "body: ${{ steps.changelog.outputs.clean_changelog }}"
+      
   
   
     
