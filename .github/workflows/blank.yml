@@ -14,42 +14,39 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ github.TOKEN }}
-        with:
-          tag_name: ${{ github.event.inputs.tag_name }}
-          release_name: ${{ github.event.inputs.tag_name }}
-          # body: |
-          #   Changelog:
-          #   - Added new feature
-          #   - Fixed bugs
-          draft: false
-          prerelease: false
-    
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Create Release
+  #       id: create_release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.TOKEN }}
+  #       with:
+  #         tag_name: ${{ github.event.inputs.tag_name }}
+  #         release_name: ${{ github.event.inputs.tag_name }}
+  #         # body: |
+  #         #   Changelog:
+  #         #   - Added new feature
+  #         #   - Fixed bugs
+  #         draft: false
+  #         prerelease: false
+  
   changelog:
-    name: Changelog
+    name: Build Changelog
     runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.build_changelog.outputs.changelog }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Generate Changelog
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v1
         with:
-          github-token: ${{ github.TOKEN }}
-          # git-user-name: "github-actions[bot]"
-          # git-user-email: "github-actions[bot]@users.noreply.github.com"
-          output-file: false
-          version-file: .github/package.yaml
-          create-summary: true
+          token: ${{ github.TOKEN }}
 
   release:
     name: Release
@@ -61,19 +58,72 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Create Release Notes
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
         with:
-          token: ${{ github.TOKEN }}
-          tag_name: ${{ github.event.inputs.tag_name }}
-          prerelease: false
+          tag_name: ${{ github.event.inputs.tag_name }} 
+          release_name: ${{ github.event.inputs.tag_name }} 
+          body: ${{ needs.changelog.outputs.changelog }}
           draft: false
-          # files: bin/*
-          generate_release_notes: true
-          name: ${{ github.event.inputs.tag_name }}
-          body: |
-            <details>
-             ${{  github.event.inputs.changelog }}
-            </details>
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+
+    
+  # changelog:
+  #   name: Changelog
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+
+  #     - name: Generate Changelog
+  #       id: changelog
+  #       uses: TriPSs/conventional-changelog-action@v5
+  #       with:
+  #         github-token: ${{ github.TOKEN }}
+  #         # git-user-name: "github-actions[bot]"
+  #         # git-user-email: "github-actions[bot]@users.noreply.github.com"
+  #         output-file: false
+  #         version-file: .github/package.yaml
+  #         create-summary: true
+
+  # fetch-data:
+  #   name: Fetch workflow payload
+  #   runs-on: ubuntu-latest
+  #   if: >
+  #     github.event.workflow_run.event == 'pull_request' &&
+  #     github.event.workflow_run.conclusion == 'success'
+  #   outputs:
+  #     target_version_tag: ${{ steps.vars.outputs.target_version_tag }}
+  #     previous_version_tag: ${{ steps.vars.outputs.previous_version_tag }}
+  #     release_branch: ${{ steps.vars.outputs.release_branch }}
+  #     odh_org: ${{ steps.vars.outputs.odh_org }}
+  #     pr_number: ${{ steps.vars.outputs.pr_number }}
+
+  # release:
+  #   name: Release
+  #   needs: changelog
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+
+  #     - name: Create Release Notes
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         token: ${{ github.TOKEN }}
+  #         tag_name: ${{ github.event.inputs.tag_name }}
+  #         prerelease: false
+  #         draft: false
+  #         # files: bin/*
+  #         generate_release_notes: true
+  #         name: ${{ github.event.inputs.tag_name }}
+  #         body: |
+  #           <details>
+  #            ${{  github.event.inputs.changelog }}
+  #           </details>
 
 
 
