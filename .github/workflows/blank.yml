@@ -44,7 +44,7 @@ jobs:
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
         with:
-          github-token: ${{ secrets.TOKEN }}
+          github-token: ${{ github.TOKEN }}
           git-user-name: "github-actions[bot]"
           git-user-email: "github-actions[bot]@users.noreply.github.com"
           output-file: false
@@ -63,7 +63,7 @@ jobs:
       - name: Create Release Notes
         uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.TOKEN }}
+          token: ${{ github.TOKEN }}
           tag_name: ${{ github.event.inputs.tag_name }}
           prerelease: false
           draft: false
