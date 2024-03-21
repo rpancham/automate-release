@@ -79,7 +79,26 @@ jobs:
               https://github.com/kserve/kserve/releases/tag/${{ env.fromTag }}
               ${{ env.changelog }}
             ${{ env.changelog }}
-            </details>
+             </details>
+
+          changelog:
+               exclude:
+               labels:
+                - ignore-for-release
+               authors:
+                - octocat
+               categories:
+               - title: Breaking Changes 
+                 labels:
+                  - Semver-Major
+                  - breaking-change
+               - title: Exciting New Features 🎉
+                 labels:
+                  - Semver-Minor
+                  - enhancement
+               - title: Other Changes
+                 labels:
+                  - "*"
     
   # changelog:
   #   name: Changelog
