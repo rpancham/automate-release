@@ -79,9 +79,8 @@ jobs:
               https://github.com/kserve/kserve/releases/tag/${{ env.fromTag }}
               ${{ env.changelog }}
             ${{ env.changelog }}
-             </details>
 
-               changelog:
+            changelog:
                 exclude:
                 labels:
                  - ignore-for-release
@@ -99,6 +98,10 @@ jobs:
                - title: Other Changes
                  labels:
                   - "*"
+
+             </details>
+
+               
     
   # changelog:
   #   name: Changelog
