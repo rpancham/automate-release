@@ -81,15 +81,15 @@ jobs:
             ${{ env.changelog }}
              </details>
 
-          changelog:
-               exclude:
-               labels:
-                - ignore-for-release
-               authors:
-                - octocat
-               categories:
-               - title: Breaking Changes 
-                 labels:
+               changelog:
+                exclude:
+                labels:
+                 - ignore-for-release
+                authors:
+                 - octocat
+                categories:
+                - title: Breaking Changes 
+                  labels:
                   - Semver-Major
                   - breaking-change
                - title: Exciting New Features 🎉
