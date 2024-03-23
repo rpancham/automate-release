@@ -74,8 +74,5 @@ jobs:
               generate_release_notes: true
               name: ${{ github.event.inputs.tag_name }}
               body: |
-                ## What's Changed
-                ### kserve/kserve
-                https://github.com/kserve/kserve/releases/tag/${{ env.old_tag }}
-                ### odh/kserve
+                
                 ${{ needs.changelog.outputs.changelog }}
