@@ -49,8 +49,7 @@ jobs:
           run: echo "${{ toJson(steps.build_changelog.outputs) }}"
  #echo "Changelog output:" ${{ steps.build_changelog.outputs }}
 
-
-          
+#Add release steps          
    release:
         name: Release
         needs: [changelog,fetch-tag]
@@ -78,5 +77,5 @@ jobs:
                 ## What's Changed
                 ### kserve/kserve
                 https://github.com/kserve/kserve/releases/tag/${{ env.old_tag }}
-                ### xyz/XYZ
+                ### odh/kserve
                 ${{ needs.changelog.outputs.changelog }}
