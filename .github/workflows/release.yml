@@ -73,8 +73,9 @@ jobs:
               files: bin/*
               generate_release_notes: true
               name: ${{ github.event.inputs.tag_name }}
+              ### kserve/kserve
+              ### https://github.com/kserve/kserve/releases/tag/${{ env.old_tag }}
               body: |
-                ### kserve/kserve
-                https://github.com/kserve/kserve/releases/tag/${{ env.old_tag }}
+             
                 
              
