@@ -38,6 +38,13 @@ jobs:
           uses: actions/checkout@v2
         - name: changelog print old tag
           run: echo  "old_tag is $old_tag"
+        - name: Check Tag Existence
+          id: check_tag
+          run: |
+            if git rev-parse --verify --quiet ${{ needs.fetch-tag.outputs.old_tag }}; then
+              echo "Tag ${{ needs.fetch-tag.outputs.old_tag }} already exists"
+              exit 1
+            fi
         - name: Build Changelog
           id: build_changelog
           uses: mikepenz/release-changelog-builder-action@v4
