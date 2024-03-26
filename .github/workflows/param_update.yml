@@ -1,0 +1,26 @@
+on:
+  release:
+    types: [published]
+  
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+   fetch-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      old_tag: ${{ steps.get_tag.outputs.release_tag_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Get latest tag
+        id: get_tag
+        run: echo "release_tag_name=$(git ls-remote --tags origin | awk -F"/" '{print $3}' | grep -v '{}' | sort -V | tail -n1)" >> $GITHUB_OUTPUT
+             sed -i "s/\${{ github.ref }}/$release_tag_name/g" params.txt
+    
+            git add params.txt
+            git commit -m "Update tag with $release_tag_name"
+            git push
