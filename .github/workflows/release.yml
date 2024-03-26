@@ -28,8 +28,8 @@ jobs:
       - name: Compare tags
         id: compare_tags
         run: |
-          old_tag= {{ steps.get_tag.outputs.old_tag_name }}
-          new_tag=${{ github.event.inputs.tag_name }}
+          old_tag= ${{ steps.get_tag.outputs.old_tag_name }}
+          new_tag= ${{ github.event.inputs.tag_name }}
           if [[ "$new_tag" == "$latest_tag" ]]; then
             echo "Error: Tag '$new_tag' already exists."
             exit 1
