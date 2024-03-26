@@ -28,7 +28,7 @@ jobs:
       - name: Check if new tag is greater than old tag and does not exist
         run: |
           old_tag=${{ steps.get_tag.outputs.old_tag_name }}
-          new_tag=${{ github.event.inputs.new_tag }}
+          new_tag=${{ github.event.inputs.tag_name }}
         
           if [[ "$(sort -V <<< "$new_tag $old_tag")" != "$old_tag $new_tag" ]]; then
             echo "New tag is not greater than the old tag."
