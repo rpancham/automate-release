@@ -34,10 +34,10 @@ jobs:
             echo "Error: Tag '$new_tag' already exists."
             exit 1
           elif [[ "$new_tag" > "$latest_tag" ]]; then
-            echo "Error: New tag '$new_tag' is not greater than the latest tag '$latest_tag'."
+            echo "Error: The New tag '$new_tag' already exists '$latest_tag'."
             exit 1
           fi
-          echo "New tag '$new_tag' is valid and greater than the latest tag '$latest_tag'."
+          echo "New tag created '$new_tag' is valid '$latest_tag'."
    changelog:
       name: Build Changelog
       needs: [fetch-tag]
