@@ -25,21 +25,19 @@ jobs:
         id: get_tag
         run: echo "old_tag_name=$(git ls-remote --tags origin | awk -F"/" '{print $3}' | grep -v '{}' | sort -V | tail -n1)" >> $GITHUB_OUTPUT
   
-      - name: Check if new tag is greater than old tag and does not exist
+      - name: Compare tags
+        id: compare_tags
         run: |
-          old_tag=${{ steps.get_tag.outputs.old_tag_name }}
+          old_tag= {{ steps.get_tag.outputs.old_tag_name }}
           new_tag=${{ github.event.inputs.tag_name }}
-        
-          if [[ "$(sort -V <<< "$new_tag $old_tag")" != "$old_tag $new_tag" ]]; then
-            echo "New tag is not greater than the old tag."
+          if [[ "$new_tag" == "$latest_tag" ]]; then
+            echo "Error: Tag '$new_tag' already exists."
             exit 1
-          elif git tag -l | grep -q "^$new_tag$"; then
-            echo "Tag $new_tag already exists."
+          elif [[ "$new_tag" > "$latest_tag" ]]; then
+            echo "Error: New tag '$new_tag' is not greater than the latest tag '$latest_tag'."
             exit 1
-          else
-            echo "New tag is greater than the old tag and does not exist. Proceeding with creating the release."
-            # Add steps to create the release here
           fi
+          echo "New tag '$new_tag' is valid and greater than the latest tag '$latest_tag'."
    changelog:
       name: Build Changelog
       needs: [fetch-tag]
