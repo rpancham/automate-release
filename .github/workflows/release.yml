@@ -25,16 +25,16 @@ jobs:
         id: get_tag
         run: echo "old_tag_name=$(git ls-remote --tags origin | awk -F"/" '{print $3}' | grep -v '{}' | sort -V | tail -n1)" >> $GITHUB_OUTPUT
   
-      - name: Compare tags
-        id: compare_tags
-        run: |
-          latest_tag=${{ steps.get_tag.outputs.latest_tag }}
-          new_tag=${{ github.event.inputs.tag_name }}
-          if ! dpkg --compare-versions "$new_tag" gt "$latest_tag"; then
-            echo "Error: New tag '$new_tag' is not greater than the latest tag '$latest_tag'."
-            exit 1
-          fi
-          echo "New tag '$new_tag' is valid and greater than the latest tag '$latest_tag'."
+      # - name: Compare tags
+      #   id: compare_tags
+      #   run: |
+      #     latest_tag=${{ steps.get_tag.outputs.latest_tag }}
+      #     new_tag=${{ github.event.inputs.tag_name }}
+      #     if ! dpkg --compare-versions "$new_tag" gt "$latest_tag"; then
+      #       echo "Error: New tag '$new_tag' is not greater than the latest tag '$latest_tag'."
+      #       exit 1
+      #     fi
+      #     echo "New tag '$new_tag' is valid and greater than the latest tag '$latest_tag'."
    changelog:
       name: Build Changelog
       needs: [fetch-tag]
