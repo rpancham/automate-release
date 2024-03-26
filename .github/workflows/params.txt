@@ -1,4 +1,0 @@
-kserve-controller=quay.io/opendatahub/kserve-controller:${{ github.ref }}
-kserve-agent=quay.io/opendatahub/kserve-agent:${{ github.ref }}
-kserve-router=quay.io/opendatahub/kserve-router:${{ github.ref }}
-kserve-storage-initializer=quay.io/opendatahub/kserve-storage-initializer:${{ github.ref }}
