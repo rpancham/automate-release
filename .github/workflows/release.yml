@@ -28,7 +28,7 @@ jobs:
   
   update-params-env:
     runs-on: ubuntu-latest
-    needs: release
+    needs: fetch-tag
     outputs:
       param_env: ${{ steps.read_params_env.outputs.params_env }}
       release_version: ${{ steps.get_release_version.outputs.release_version }}
