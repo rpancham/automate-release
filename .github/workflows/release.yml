@@ -52,7 +52,7 @@ jobs:
     needs: fetch-tag
     outputs:
       param_env: ${{ steps.read_params_env.outputs.params_env }}
-      # release_version: ${{ steps.get_release_version.outputs.release_version }}
+      old_release_tag: ${{ needs.fetch-tag.outputs.old_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -62,10 +62,6 @@ jobs:
         run: |
           echo "params_env=$(cat config/params.env)" >> $GITHUB_ENV
               
-      # - name: Read release version
-      #   id: get_release_version
-      #   run: echo "release_version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-              
       - name: Update params.env with new release version
         run: |     
           sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/params.env
@@ -74,7 +70,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           git add config/params.env
-          git commit -m "Update params.env with new release tags [${{ steps.get_release_version.outputs.release_version }}]"
+          git commit -m "Update image refs for odh release [${{ needs.fetch-tag.outputs.old_tag }}]"
           git push 
 
   changelog:
