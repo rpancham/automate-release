@@ -57,8 +57,8 @@ jobs:
         run: |
           LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
           echo "Latest tag: $LATEST_TAG"
-          if [ "$LATEST_TAG" != "${NEW_TAG#refs/tags/}" ]; then
-            echo "Error: NEW_TAG '${NEW_TAG#refs/tags/}' does not match the latest tag '$LATEST_TAG'."
+          if [ "$LATEST_TAG" = "${NEW_TAG#refs/tags/}" ]; then
+            echo "Error: NEW_TAG '${NEW_TAG#refs/tags/}' tag already exists '$LATEST_TAG'."
             exit 1
           fi
      
