@@ -33,34 +33,34 @@ jobs:
           echo "LATEST_TAG=${{ steps.get_tag.outputs.old_tag_name }}" >> $GITHUB_ENV
           echo "NEW_TAG=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
               
-      # - name: Check if new tag already exists
-      #   id: check_tag
-      #   run: |
-      #     if git rev-parse ${{ env.NEW_TAG }} >/dev/null 2>&1; then
-      #       echo "Error: Tag '${{ env.NEW_TAG }}' already exists."
-      #       exit 1
-      #     fi
-      #   continue-on-error: false
-      #   shell: bash
+      - name: Check if new tag already exists
+        id: check_tag
+        run: |
+          if git rev-parse ${{ env.NEW_TAG }} >/dev/null 2>&1; then
+            echo "Error: Tag '${{ env.NEW_TAG }}' already exists."
+            exit 1
+          fi
+        # continue-on-error: false
+        # shell: bash
       # - name: Handle Failure
       #   if: failure()
       #   run: |
       #     exit 1
       # # echo "Tag already exists. Workflow failed."
 
-      - name: Fetch all tags
-        run: git fetch --tags
-      - name: Check if NEW_TAG matches the latest tag
-        id: check_latest_tag
-        env:
-          NEW_TAG: ${{ github.ref }}
-        run: |
-          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          echo "Latest tag: $LATEST_TAG"
-          if [ "$LATEST_TAG" = "${NEW_TAG#refs/tags/}" ]; then
-            echo "Error: NEW_TAG '${NEW_TAG#refs/tags/}' tag already exists '$LATEST_TAG'."
-            exit 1
-          fi
+      # - name: Fetch all tags
+      #   run: git fetch --tags
+      # - name: Check if NEW_TAG matches the latest tag
+      #   id: check_latest_tag
+      #   env:
+      #     NEW_TAG: ${{ github.ref }}
+      #   run: |
+      #     LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+      #     echo "Latest tag: $LATEST_TAG"
+      #     if [ "$LATEST_TAG" = "${NEW_TAG#refs/tags/}" ]; then
+      #       echo "Error: NEW_TAG '${NEW_TAG#refs/tags/}' tag already exists '$LATEST_TAG'."
+      #       exit 1
+      #     fi
      
   update-params-env:
     runs-on: ubuntu-latest
