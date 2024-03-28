@@ -125,5 +125,4 @@ jobs:
           generate_release_notes: true
           name: ${{ github.event.inputs.tag_name }}
           body: |
-            Release notes for version ${{ github.event.inputs.tag_name }}:
             ${{ env.changelog }}
