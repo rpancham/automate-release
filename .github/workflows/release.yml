@@ -46,7 +46,7 @@ jobs:
         if: failure()
         run: |
           exit 1
-          echo "Tag already exists. Workflow failed."
+      # echo "Tag already exists. Workflow failed."
      
   update-params-env:
     runs-on: ubuntu-latest
