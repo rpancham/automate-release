@@ -40,13 +40,13 @@ jobs:
             echo "Error: Tag '${{ env.NEW_TAG }}' already exists."
             exit 1
           fi
-        # continue-on-error: false
-        # shell: bash
-      # - name: Handle Failure
-      #   if: failure()
-      #   run: |
-      #     exit 1
-      # # echo "Tag already exists. Workflow failed."
+        continue-on-error: false
+        shell: bash
+      - name: Handle Failure
+        if: failure()
+        run: |
+          exit 1
+          echo "Tag already exists. Workflow failed."
 
       # - name: Fetch all tags
       #   run: git fetch --tags
