@@ -47,20 +47,6 @@ jobs:
         run: |
           exit 1
           echo "Tag already exists. Workflow failed."
-
-      # - name: Fetch all tags
-      #   run: git fetch --tags
-      # - name: Check if NEW_TAG matches the latest tag
-      #   id: check_latest_tag
-      #   env:
-      #     NEW_TAG: ${{ github.ref }}
-      #   run: |
-      #     LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-      #     echo "Latest tag: $LATEST_TAG"
-      #     if [ "$LATEST_TAG" = "${NEW_TAG#refs/tags/}" ]; then
-      #       echo "Error: NEW_TAG '${NEW_TAG#refs/tags/}' tag already exists '$LATEST_TAG'."
-      #       exit 1
-      #     fi
      
   update-params-env:
     runs-on: ubuntu-latest
@@ -87,7 +73,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           git add config/params.env
-          git commit -m "Update image refs for odh release"
+          git commit -m "Update image refs for odh release."
           git push 
 
   changelog:
@@ -100,10 +86,7 @@ jobs:
       old_tag: ${{ needs.fetch-tag.outputs.old_tag }} 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: changelog print old tag
-        run: echo  "old_tag is $old_tag"
-        
+        uses: actions/checkout@v4   
       - name: Build Changelog
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v4
@@ -111,11 +94,9 @@ jobs:
           fromTag: ${{ needs.fetch-tag.outputs.old_tag }}
           toTag:  ${{ github.event.inputs.tag_name }}
           token: ${{ github.token }}
-      - name: print_output
-        run: echo "${{ toJson(steps.build_changelog.outputs) }}"
-
+          
   release:
-    name: Release
+    name: Release 
     needs: [changelog, fetch-tag]
     runs-on: ubuntu-latest
     env:
@@ -137,5 +118,4 @@ jobs:
           files: bin/*
           generate_release_notes: true
           name: ${{ github.event.inputs.tag_name }}
-          body: |
-            ${{ env.changelog }}
+          
