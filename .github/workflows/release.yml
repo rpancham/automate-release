@@ -31,7 +31,7 @@ jobs:
         run: | 
           echo "Old Tag: ${{ steps.get_tag.outputs.old_tag_name }}"
           echo "NEW_TAG=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
-          echo "github.ref_name =${{ github.event.repository.default_branch  }}"
+          echo "github.ref_name =${{ github.event.repository.default_branch }}"
       
       - name: Check if new tag already exists
         id: check_tag
