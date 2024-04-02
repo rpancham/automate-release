@@ -85,7 +85,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           git add config/params.env
-          git commit -m "Update image refs for odh release [${{ needs.fetch-tag.outputs.old_tag }}]"
+          git commit -m "Update image refs for odh release"
           git push 
 
   changelog:
