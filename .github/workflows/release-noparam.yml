@@ -45,8 +45,8 @@ jobs:
       - name: Handle Failure
         if: failure()
         run: |
-          exit 1
           echo "Tag already exists. Workflow failed."
+          exit 1
      
   # update-params-env:
   #   runs-on: ubuntu-latest
