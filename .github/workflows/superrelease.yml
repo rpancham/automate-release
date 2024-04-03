@@ -19,7 +19,9 @@ jobs:
       old_tag: ${{ steps.get_tag.outputs.old_tag_name }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       
       - name: Get latest tag
         id: get_tag
@@ -91,7 +93,9 @@ jobs:
       old_tag: ${{ needs.fetch-tag.outputs.old_tag }} 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4   
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Generate Changelog
         id: generate_changelog
         uses: mikepenz/release-changelog-builder-action@v4
