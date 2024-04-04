@@ -112,7 +112,7 @@ jobs:
           prerelease: false
           draft: false
           files: bin/*
-          generate_release_notes: false
+          generate_release_notes: true
           name: ${{ github.event.inputs.tag_name }}
           # body: ${{ steps.generate_changelog.outputs.changelog }}
         env:
