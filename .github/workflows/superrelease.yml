@@ -57,7 +57,6 @@ jobs:
     needs: fetch-tag
     outputs:
       param_env: ${{ steps.read_params_env.outputs.params_env }}
-      old_release_tag: ${{ needs.fetch-tag.outputs.old_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -82,7 +81,6 @@ jobs:
 
       - name: Create Tag
         id: create_tag
-        if: steps.check_tag.outcome == 'success'
         run: |
           git tag -a ${{ github.event.inputs.tag_name }} -m "Prepare for ODH release ${{ github.event.inputs.tag_name }}"
           git push origin ${{ github.event.inputs.tag_name }}
@@ -91,10 +89,6 @@ jobs:
     name: Changelog
     needs: [fetch-tag,update-params-env]
     runs-on: ubuntu-latest
-    outputs:
-      changelog: ${{ steps.generate_changelog.outputs.changelog }}
-    env:
-      old_tag: ${{ needs.fetch-tag.outputs.old_tag }} 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
