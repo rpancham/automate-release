@@ -67,7 +67,7 @@ jobs:
         run: |
           if git rev-parse "${{ github.event.inputs.tag_name }}" >/dev/null 2>&1; then
             echo "Error: Tag '${{ github.event.inputs.tag_name }}' already exists."
-            exit 1
+            fail "Tag already exists" 
           fi
         continue-on-error: false
         shell: bash
