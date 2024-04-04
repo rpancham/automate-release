@@ -33,6 +33,23 @@ jobs:
           echo "Old Tag=${{ steps.get_tag.outputs.old_tag_name }}"
           echo "NEW_TAG=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
           echo "$(basename ${{ github.ref }})"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+         import sys
+         import subprocess
+         tag_name = "${{ github.event.inputs.tag_name }}"
+         command = ['git', 'tag', '-l', tag_name]
+         output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+         if output.decode() != "":
+           print(f"Error: Tag '{tag_name}' already exists.", file=sys.stderr)
+           sys.exit(1)
+         else:
+           print(f"Tag '{tag_name}' does not exist.")
+        
+        shell: python
+        continue-on-error: false
   
   update-params-env:
     runs-on: ubuntu-latest
@@ -62,16 +79,6 @@ jobs:
           git commit -m "Update image refs for odh release."
           git push 
 
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          if git rev-parse "${{ github.event.inputs.tag_name }}" >/dev/null 2>&1; then
-            echo "Error: Tag '${{ github.event.inputs.tag_name }}' already exists."
-            echo "::error::Tag '${{ github.event.inputs.tag_name }}' already exists."
-            exit 1
-          fi
-        continue-on-error: false
-        shell: bash
       - name: Create Tag
         id: create_tag
         if: steps.check_tag.outcome == 'success'
