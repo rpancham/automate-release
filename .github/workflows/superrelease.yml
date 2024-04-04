@@ -110,7 +110,7 @@ jobs:
           files: bin/*
           generate_release_notes: false
           name: ${{ github.event.inputs.tag_name }}
-          body: ${{ steps.generate_changelog.outputs.changelog }}
+          
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
