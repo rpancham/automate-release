@@ -41,7 +41,7 @@ jobs:
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
-          git add config/overlays/odh/params.env
+          git add config/params.env
           git commit -m "Update image refs for odh release."       
 
       - name: Create Pull Request
