@@ -92,7 +92,7 @@
 name: TEST - ODH Create Tag and Release with Changelog1
 
 on:
-  push:
+  pull_request:
     paths:
       - '.github/workflows/scheduled-go-security-scan.yml'
       - '.github/workflows/go.yml'
