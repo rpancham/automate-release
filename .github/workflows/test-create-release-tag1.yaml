@@ -47,13 +47,15 @@ jobs:
           body: Update images for ${{ github.event.inputs.tag_name }}
           token: ${{ github.token }}
         
-      # - name: Trigger Build
-      #   if: github.event_name == 'push'  # Trigger build only on push events
-      #   run: |
-         
-      #     gh workflow run scheduled-go-security-scan.yml -f branch=${{ github.event.inputs.tag_name }}
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Trigger Build
+        if: |
+          github.event_name == 'push' && (
+            contains(github.event.head_commit.modified, '.github/workflows/scheduled-go-security-scan.yml') ||
+            contains(github.event.head_commit.modified, '.github/workflows/go.yml')
+        run: |
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   wait-checks:
     runs-on: ubuntu-latest
