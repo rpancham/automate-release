@@ -1,4 +1,4 @@
-name: TEST - ODH Create Tag and Release with Changelog
+name: TEST - ODH Create Tag and Release with Changelog1
 
 on:
   push:
@@ -51,7 +51,7 @@ jobs:
         if: |
           github.event_name == 'push' && (
             contains(github.event.head_commit.modified, '.github/workflows/scheduled-go-security-scan.yml') ||
-            contains(github.event.head_commit.modified, '.github/workflows/go.yml')
+            contains(github.event.head_commit.modified, '.github/workflows/go.yml'))
         run: echo "Triggering build based on modified files"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
