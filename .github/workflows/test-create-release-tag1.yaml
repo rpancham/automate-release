@@ -1,6 +1,9 @@
 name: TEST - ODH Create Tag and Release with Changelog
 
 on:
+  push:
+    paths:
+      - .github/workflows/scheduled-go-security-scan.yml
   workflow_dispatch:
     inputs:
       tag_name:
@@ -20,12 +23,6 @@ jobs:
     outputs:
       pr_number: ${{ steps.cpr.outputs.pull-request-number }}
     steps:
-      # - name: Generate github-app token
-      #   id: app-token
-      #   uses: getsentry/action-github-app-token@v2
-      #   with:
-      #     app_id: ${{ secrets.DEVOPS_APP_ID }}
-      #     private_key: ${{ secrets.DEVOPS_APP_PRIVATE_KEY }}
       - name: Checkout source
         uses: actions/checkout@v4
 
@@ -33,16 +30,12 @@ jobs:
         run: |     
           sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/params.env
       
-      - name: Update params.env with new release version
-        run: |     
-          sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/params.env
-
       - name: Commit changes
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           git add config/params.env
-          git commit -m "Update image refs for odh release."       
+          git commit -m "Update image refs for odh release."
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
@@ -52,7 +45,14 @@ jobs:
           title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
           body: Update images for ${{ github.event.inputs.tag_name }}
           token: ${{ github.token }}
-          # token: ${{ steps.app-token.outputs.token }}
+        
+      - name: Trigger Build
+        if: github.event_name == 'push'  # Trigger build only on push events
+        run: |
+         
+          gh workflow run scheduled-go-security-scan.yml -f branch=${{ github.event.inputs.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   wait-checks:
     runs-on: ubuntu-latest
@@ -83,6 +83,3 @@ jobs:
         env:     
           # GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
            GITHUB_TOKEN: ${{ secrets.TOKEN }}
-
-
-  
