@@ -52,7 +52,7 @@ jobs:
           github.event_name == 'push' && (
             contains(github.event.head_commit.modified, '.github/workflows/scheduled-go-security-scan.yml') ||
             contains(github.event.head_commit.modified, '.github/workflows/go.yml')
-        run: |
+        run: echo "Triggering build based on modified files"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
