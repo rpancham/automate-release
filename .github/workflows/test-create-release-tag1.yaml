@@ -1,6 +1,9 @@
 name: TEST - ODH Create Tag and Release with Changelog
 
 on:
+  push:
+    paths:
+      - .github/workflows/scheduled-go-security-scan.yml
   workflow_dispatch:
     inputs:
       tag_name:
@@ -25,13 +28,13 @@ jobs:
 
       - name: Update params.env with new release version
         run: |     
-          sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/overlays/odh/params.env
+          sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/params.env
       
       - name: Commit changes
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
-          git add config/overlays/odh/params.env
+          git add config/params.env
           git commit -m "Update image refs for odh release."
 
       - name: Create Pull Request
@@ -44,9 +47,10 @@ jobs:
           token: ${{ github.token }}
         
       - name: Trigger Build
+        if: github.event_name == 'push'  # Trigger build only on push events
         run: |
-          # Assuming your build workflow file is build.yml
-          gh workflow run build.yml -f branch=${{ github.event.inputs.tag_name }}
+         
+          gh workflow run scheduled-go-security-scan.yml -f branch=${{ github.event.inputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
