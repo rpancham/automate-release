@@ -3,7 +3,8 @@ name: TEST - ODH Create Tag and Release with Changelog
 on:
   push:
     paths:
-      - .github/workflows/scheduled-go-security-scan.yml
+      - '.github/workflows/scheduled-go-security-scan.yml'
+      - '.github/workflows/go.yml'
   workflow_dispatch:
     inputs:
       tag_name:
