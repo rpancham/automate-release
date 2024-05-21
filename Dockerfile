@@ -14,16 +14,16 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o hello-world .
+RUN go build -o main .
 
 # Start a new stage from scratch
 FROM alpine:latest
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=build /app/hello-world /hello-world
+COPY --from=build /app/main /main
 
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
 # Command to run the executable
-CMD ["/hello-world"]
+CMD ["/main"]
