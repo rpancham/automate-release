@@ -1,16 +1,29 @@
-# Build the manager binary
-FROM golang:1.21 as builder
+# Use the official Golang image as the build stage
+FROM golang:1.18-alpine AS build
 
-# Copy in the go src
-# WORKDIR /go/src/github.com/kserve/kserve
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy go.mod and go.sum files
+COPY go.mod go.sum ./
+
+# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+RUN go mod download
+
+# Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
+# Build the Go app
+RUN go build -o hello-world .
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux GOFLAGS=-mod=mod go build -a -o main ./main.go
+# Start a new stage from scratch
+FROM alpine:latest
 
-# Copy the controller-manager into a thin image
-FROM gcr.io/distroless/static:nonroot
-# COPY third_party/ /third_party/
-COPY --from=builder /main 
-ENTRYPOINT ["/main"]
+# Copy the Pre-built binary file from the previous stage
+COPY --from=build /app/hello-world /hello-world
+
+# Expose port 8080 to the outside world
+EXPOSE 8080
+
+# Command to run the executable
+CMD ["/hello-world"]
