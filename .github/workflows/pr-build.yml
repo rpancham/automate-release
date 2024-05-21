@@ -3,9 +3,9 @@ name: Automate PR builds/image for Kserve
 on:
   pull_request: 
    types: [opened, synchronize, reopened]
-   paths:
-      - '.github/workflows/scheduled-go-security-scan.yml'
-      - '.github/workflows/go.yml'
+  #  paths:
+  #     - '.github/workflows/scheduled-go-security-scan.yml'
+  #     - '.github/workflows/go.yml'
    
 jobs:
   build-and-test:
@@ -32,7 +32,7 @@ jobs:
         run: docker push quay.io/${{ secrets.QUAY_USERNAME }}/test:${{ github.sha }}
 
     
-# Leave comment
+      # Leave comment
       - uses: peter-evans/find-comment@v3
         name: Find Comment
         id: fc
