@@ -1,0 +1,17 @@
+name: Clone Specific Folder
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  clone-folder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Execute Shell Script
+        run: ./clonefile.sh
