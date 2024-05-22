@@ -79,13 +79,13 @@ jobs:
           git push origin $BRANCH_NAME
           
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v4
         id: cpr
         with:
           commit-message: Update image refs for odh release
           title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
           body: Update images for ${{ github.event.inputs.tag_name }}
-          token: ${{ github.token }}
+          token: ${{ github.TOKEN}}
           base: ${{ github.ref }}
           branch: ${BRANCH_NAME}
           delete-branch: true
@@ -109,7 +109,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ github.token }}
+          token: ${{ github.TOKEN }}
           tag_name: ${{ github.event.inputs.tag_name }}
           prerelease: false
           draft: false
