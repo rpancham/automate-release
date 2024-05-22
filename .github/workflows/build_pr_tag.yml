@@ -78,37 +78,18 @@ jobs:
           git commit -m "Update image refs for odh release."
           git push origin $BRANCH_NAME
 
-  create-pr:
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_BRANCH: ${{ github.ref }}
-    outputs:
-      pr_number: ${{ steps.cpr.outputs.pull-request-number }}
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
+          
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v4
         id: cpr
         with:
-          commit-message: update changelog
+          commit-message: Update image refs for odh release
           title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
           body: Update images for ${{ github.event.inputs.tag_name }}
-          token: ${{ github.token }}
-        
-          
-      # - name: Create Pull Request
-      #   uses: peter-evans/create-pull-request@v4
-      #   id: cpr
-      #   with:
-      #     # commit-message: Update image refs for odh release
-      #     title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
-      #     body: Update images for ${{ github.event.inputs.tag_name }}
-      #     token: ${{ github.TOKEN}}
-      #     base: ${{ github.ref }}
-      #     branch: ${{env.BRANCH_NAME}}
-      #     # delete-branch: true
+          token: ${{ github.TOKEN}}
+          base: ${{ github.ref }}
+          # branch: ${{env.BRANCH_NAME}}
+          # delete-branch: true
        
       - name: Create Tag
         id: create_tag
