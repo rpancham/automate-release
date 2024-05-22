@@ -78,6 +78,16 @@ jobs:
           git commit -m "Update image refs for odh release."
           git push origin $BRANCH_NAME
 
+  create-pr:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_BRANCH: ${{ github.ref }}
+    outputs:
+      pr_number: ${{ steps.cpr.outputs.pull-request-number }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         id: cpr
