@@ -101,7 +101,7 @@ jobs:
           pr_number=$(echo "$PR_URL" | grep -o -E '[0-9]+$')
           echo "pr_number=${pr_number}" >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.TOKEN }}
+          GH_TOKEN: ${{ github.TOKEN }}
   
       # - name: Create Pull Request
       #   uses: devops-infra/action-pull-request@v0.5.5
@@ -110,7 +110,7 @@ jobs:
       #     # commit-message: Update image refs for odh release
       #     title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
       #     body: Update images for ${{ github.event.inputs.tag_name }}
-      #     github_token: ${{ secrets.TOKEN }}
+      #     github_token: ${{ github.TOKEN }}
       #     source_branch: ${{env.BRANCH_NAME}}
       #     target_branch: ${{ github.ref }}
           # delete-branch: true
@@ -129,7 +129,7 @@ jobs:
         run:
           gh pr checks  ${{ needs.create-pr.outputs.pr_number }}  --watch --fail-fast 
         env:     
-          GH_TOKEN: ${{ secrets.TOKEN }}
+          GH_TOKEN: ${{ github.TOKEN }}
 
 
   merge-pr:
@@ -145,7 +145,7 @@ jobs:
         if: ${{ needs.wait-checks.result == 'success' }}
         run: gh pr merge --merge --auto  ${{ needs.create-pr.outputs.pr_number }} 
         env:     
-           GH_TOKEN: ${{ secrets.TOKEN }}
+           GH_TOKEN: ${{ github.TOKEN }}
    
       
 
@@ -172,7 +172,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.TOKEN }}
+          token: ${{ github.TOKEN }}
           tag_name: ${{ github.event.inputs.tag_name }}
           prerelease: false
           draft: false
