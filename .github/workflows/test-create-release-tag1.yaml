@@ -89,8 +89,8 @@ jobs:
         run: |
           git add  config/params.env
           git commit -m "Update image refs for odh release"
-          git fetch origin
-          git pull --rebase origin $BRANCH_NAME
+          git fetch origin $BRANCH_NAME
+          git rebase origin/$BRANCH_NAME
           git push origin $BRANCH_NAME
       - name: Create Pull Request
         id: create-pull-request
@@ -158,6 +158,10 @@ jobs:
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
       - name: Create Tag
         id: create_tag
         run: |
