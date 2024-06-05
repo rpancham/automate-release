@@ -93,7 +93,7 @@ jobs:
           pr_number=$(echo "$PR_URL" | grep -o -E '[0-9]+$')
           echo "pr_number=${pr_number}" >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}  
+          token: ${{ github.TOKEN} 
 
   wait-checks:
     runs-on: ubuntu-latest
@@ -105,7 +105,7 @@ jobs:
           gh pr checks  ${{ needs.create-pr.outputs.pr_number }}  --watch --fail-fast 
         env:     
 
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}  
+         token: ${{ github.TOKEN}
   comment-lgtm:
     needs: [ check-prev-tag,create-pr,wait-checks ]
     runs-on: ubuntu-latest
@@ -116,7 +116,7 @@ jobs:
           gh pr comment ${{ needs.create-pr.outputs.pr_number }} --body "/lgtm"
           gh pr edit ${{ needs.create-pr.outputs.pr_number }} --add-label lgtm
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          token: ${{ github.TOKEN}
 
   wait-lgtm:
     runs-on: ubuntu-latest
@@ -146,8 +146,7 @@ jobs:
             exit 1
           fi
         env:
-
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          token: ${{ github.TOKEN}
   
   docker-build:
     needs: [ check-prev-tag,create-pr,wait-checks,comment-lgtm,wait-lgtm]
@@ -205,7 +204,7 @@ jobs:
         run: |
          gh pr merge ${{ needs.create-pr.outputs.pr_number }} --merge --auto
         env:
-         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+         token: ${{ github.TOKEN}
 
       - name: Wait for PR to be merged
         uses: nick-fields/retry@v3
@@ -222,7 +221,7 @@ jobs:
               exit 1
             fi
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+         token: ${{ github.TOKEN}
 
       - name: pull image (with retry)
         uses: nick-fields/retry@v3
@@ -267,7 +266,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ github.TOKEN}
           tag_name: ${{ github.event.inputs.tag_name }}
           prerelease: false
           draft: false
