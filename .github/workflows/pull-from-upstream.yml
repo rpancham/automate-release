@@ -73,9 +73,12 @@ on:
 jobs:
   fetch-branches:
     runs-on: ubuntu-latest
+    env:
+     BASE_URL: https://github.com/opendatahub-io/$options.git
     outputs:
       branches: ${{ steps.get-branches.outputs.branches }}
 
+    
     steps:
     - name: Set repository URL
       id: set-repo-url
@@ -84,6 +87,8 @@ jobs:
           echo "::set-output name=url::https://github.com/opendatahub-io/openvino_model_server.git"
         elif [ "${{ github.event.inputs.upstream_repo }}" == "kserve" ]; then
           echo "::set-output name=url::https://github.com/opendatahub-io/kserve.git"
+        elif [ "${{ github.event.inputs.upstream_repo }}" == "modelmesh" ]; then
+          echo "::set-output name=url::https://github.com/opendatahub-io/modelmesh.git"
         elif [ "${{ github.event.inputs.upstream_repo }}" == "modelmesh" ]; then
           echo "::set-output name=url::https://github.com/opendatahub-io/modelmesh.git"
         fi
