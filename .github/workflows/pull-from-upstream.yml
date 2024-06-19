@@ -1,0 +1,50 @@
+name: Pull from Upstream
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_repo:
+        description: 'Select Upstream Repository'
+        required: true
+        type: choice
+        options:
+          - 'https://github.com/opendatahub-io/openvino_model_server.git'
+          - 'https://github.com/opendatahub-io/kserve.git'
+      upstream_branch:
+        description: 'Upstream branch to pull from'
+        required: true
+        default: 'main'  # Default value, will be overwritten by fetched branches
+      target_branch:
+        description: 'Target branch to pull into'
+        required: true
+        default: 'main'
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout current repository
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.inputs.target_branch }}
+
+    - name: Set up Git
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+    - name: Add upstream remote
+      run: |
+        git remote add upstream ${{ github.event.inputs.upstream_repo }}
+
+    - name: Fetch upstream branch
+      run: |
+        git fetch upstream ${{ github.event.inputs.upstream_branch }}
+
+    - name: Pull from upstream
+      run: |
+        git pull upstream ${{ github.event.inputs.upstream_branch }}
+      
+    - name: Push changes to target branch
+      run: |
+        git push origin ${{ github.event.inputs.target_branch }}
