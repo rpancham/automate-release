@@ -1,55 +1,3 @@
-# name: Pull from Upstream
-
-# on:
-#   workflow_dispatch:
-#     inputs:
-#       upstream_repo:
-#         description: 'Select Upstream Repository'
-#         required: true
-#         type: choice
-#         options:
-#           - 'https://github.com/opendatahub-io/openvino_model_server.git'
-#           - 'https://github.com/opendatahub-io/kserve.git'
-#       upstream_branch:
-#         description: 'Upstream branch to pull from'
-#         required: true
-#         default: 'main'  # Default value, will be overwritten by fetched branches
-#       target_branch:
-#         description: 'Target branch to pull into'
-#         required: true
-#         default: 'main'
-
-# jobs:
-#   pull:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#     - name: Checkout current repository
-#       uses: actions/checkout@v2
-#       with:
-#         ref: ${{ github.event.inputs.target_branch }}
-
-#     - name: Set up Git
-#       run: |
-#         git config --global user.name 'github-actions'
-#         git config --global user.email 'github-actions@github.com'
-#     - name: Add upstream remote
-#       run: |
-#         git remote add upstream ${{ github.event.inputs.upstream_repo }}
-
-#     - name: Fetch upstream branch
-#       run: |
-#         git fetch upstream ${{ github.event.inputs.upstream_branch }}
-
-#     - name: Pull from upstream
-#       run: |
-#         git pull upstream ${{ github.event.inputs.upstream_branch }}
-      
-#     - name: Push changes to target branch
-#       run: |
-#         git push origin ${{ github.event.inputs.target_branch }}
-
-
 name: Pull from Upstream
 
 on:
@@ -63,6 +11,9 @@ on:
           - 'openvino_model_server'
           - 'kserve'
           - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
       upstream_branch:
         description: 'Upstream branch to pull from'
         required: true
@@ -71,33 +22,11 @@ on:
         required: true
 
 jobs:
-  fetch-branches:
-    runs-on: ubuntu-latest
-    outputs:
-      branches: ${{ steps.get-branches.outputs.branches }}
-
-    steps:
-    - name: Set repository URL
-      id: set-repo-url
-      run: |
-        if [ "${{ github.event.inputs.upstream_repo }}" == "openvino_model_server" ]; then
-          echo "::set-output name=url::https://github.com/opendatahub-io/openvino_model_server.git"
-        elif [ "${{ github.event.inputs.upstream_repo }}" == "kserve" ]; then
-          echo "::set-output name=url::https://github.com/opendatahub-io/kserve.git"
-        elif [ "${{ github.event.inputs.upstream_repo }}" == "modelmesh" ]; then
-          echo "::set-output name=url::https://github.com/opendatahub-io/modelmesh.git"
-        fi
-
-    - name: Fetch branches
-      id: get-branches
-      run: |
-        REPO_URL=${{ steps.set-repo-url.outputs.url }}
-        BRANCHES=$(git ls-remote --heads $REPO_URL | awk -F'/' '{print $NF}')
-        echo "::set-output name=branches::$BRANCHES"
-
   pull:
     runs-on: ubuntu-latest
-    needs: fetch-branches
+    env:
+      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
+      BASE_TARGET_URL: https://github.com/red-hat-data-services/
 
     steps:
     - name: Checkout current repository
@@ -105,15 +34,16 @@ jobs:
       with:
         ref: ${{ github.event.inputs.target_branch }}
 
-    - name: Set up Git
+    - name: Setup Git
       run: |
-       git config --global user.name 'github-actions'
-       git config --global user.email 'github-actions@github.com'
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
 
     - name: Add upstream remote
       run: |
-        REPO_URL=${{ needs.fetch-branches.outputs.url }}
-        git remote add upstream $REPO_URL
+        UPSTREAM_REPO="${{ github.event.inputs.upstream_repo }}"
+        UPSTREAM_URL="${{ env.BASE_UPSTREAM_URL }}${UPSTREAM_REPO}.git"
+        git remote add upstream $UPSTREAM_URL
 
     - name: Fetch upstream branch
       run: |
@@ -128,4 +58,3 @@ jobs:
     - name: Push changes to target branch
       run: |
         git push origin ${{ github.event.inputs.target_branch }}
-
