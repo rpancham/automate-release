@@ -55,21 +55,20 @@ jobs:
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
 
-    - name: Sync with upstream
-      uses: TobKed/github-forks-sync-action@master
-      with:
-        github_token: ${{ secrets.PAT_TOKEN }}
-        upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
-        target_repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
-        upstream_branch: ${{ github.event.inputs.upstream_branch }}
-        target_branch: ${{ github.event.inputs.target_branch }}
-        force: false
-        tags: false
-
     - name: Checkout target branch
       uses: actions/checkout@v2
       with:
+        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
         ref: ${{ github.event.inputs.target_branch }}
+
+    - name: Add upstream repository
+      run: |
+        git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
+        git fetch upstream
+
+    - name: Pull from upstream
+      run: |
+        git pull upstream ${{ github.event.inputs.upstream_branch }}
 
     - name: Cherry-pick patches
       run: |
