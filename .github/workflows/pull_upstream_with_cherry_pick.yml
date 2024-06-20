@@ -1,0 +1,93 @@
+name: Pull from Upstream and Cherry-pick Patches
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_repo:
+        description: 'Select Upstream Repository'
+        required: true
+        type: choice
+        options:
+          - 'openvino_model_server'
+          - 'kserve'
+          - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
+          - 'caikit-nlp'
+          - 'caikit'
+          - 'odh-model-controller'
+          - 'caikit-tgis-backend'
+          - 'caikit-nlp-client'
+          - 'model-registry'
+      upstream_branch:
+        description: 'Upstream branch to pull from'
+        required: true
+      target_branch:
+        description: 'Target branch to pull into'
+        required: true
+      patch_commits:
+        description: 'Comma-separated list of commit SHAs to cherry-pick'
+        required: true
+      pr_title:
+        description: 'Title for the PR'
+        required: false
+      pr_body:
+        description: 'Body for the PR'
+        required: false
+
+jobs:
+  pull_and_cherry_pick:
+    runs-on: ubuntu-latest
+    env:
+      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
+      BASE_TARGET_URL: https://github.com/red-hat-data-services/
+
+    steps:
+    - name: Set repository
+      id: set-repo
+      run: |
+        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+
+    - name: Sync with upstream
+      uses: TobKed/github-forks-sync-action@master
+      with:
+        github_token: ${{ secrets.PAT_TOKEN }}
+        upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
+        target_repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        upstream_branch: ${{ github.event.inputs.upstream_branch }}
+        target_branch: ${{ github.event.inputs.target_branch }}
+        force: false
+        tags: false
+
+    - name: Checkout target branch
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.inputs.target_branch }}
+
+    - name: Cherry-pick patches
+      run: |
+        IFS=',' read -r -a commits <<< "${{ github.event.inputs.patch_commits }}"
+        for commit in "${commits[@]}"; do
+          git cherry-pick $commit || { echo "Cherry-pick failed for commit $commit"; exit 1; }
+        done
+
+    - name: Push changes to target branch
+      run: |
+        git push origin ${{ github.event.inputs.target_branch }}
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
+        branch: "cherry-pick-${{ github.event.inputs.target_branch }}"
+        base: ${{ github.event.inputs.target_branch }}
+        title: ${{ github.event.inputs.pr_title || 'Cherry-pick of commits into ' + github.event.inputs.target_branch }}
+        body: ${{ github.event.inputs.pr_body || 'Cherry-pick of the following commits: ' + github.event.inputs.patch_commits }}
