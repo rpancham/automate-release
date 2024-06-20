@@ -37,7 +37,7 @@ jobs:
     - name: sync
       uses: TobKed/github-forks-sync-action@master
       with:
-        github_token: ${{ github.TOKEN}}
+        github_token: ${{ github.Sync_upstream}}
         upstream_repository: opendatahub-io/kserve
         target_repository: rpancham/kserve
         upstream_branch: ${{ github.event.inputs.upstream_branch }}
