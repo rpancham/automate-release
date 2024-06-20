@@ -39,7 +39,7 @@ jobs:
       with:
         github_token: ${{ github.TOKEN}}
         upstream_repository: opendatahub-io/kserve
-        target_repository: test-opendatahub-io/kserve
+        target_repository: rpancham/kserve
         upstream_branch: ${{ github.event.inputs.upstream_branch }}
         target_branch: ${{ github.event.inputs.target_branch }}
         force: false
