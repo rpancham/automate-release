@@ -24,37 +24,23 @@ on:
 jobs:
   pull:
     runs-on: ubuntu-latest
-    env:
-      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-      BASE_TARGET_URL: https://github.com/red-hat-data-services/
-
     steps:
-    - name: Checkout current repository
-      uses: actions/checkout@v2
+    - name: Set repository
+      id: set-repo
+      run: |
+        echo "UPSTREAM_ORG_REPO=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_ENV
+        echo "MIDSTREAM_ORG_REPO=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_ENV
+    - name: Ser git config
+      run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+    - name: sync
+      uses: TobKed/github-forks-sync-action@master
       with:
-        ref: ${{ github.event.inputs.target_branch }}
-
-    - name: Setup Git
-      run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
-
-    - name: Add upstream remote
-      run: |
-        UPSTREAM_REPO="${{ github.event.inputs.upstream_repo }}"
-        UPSTREAM_URL="${{ env.BASE_UPSTREAM_URL }}${UPSTREAM_REPO}.git"
-        git remote add upstream $UPSTREAM_URL
-
-    - name: Fetch upstream branch
-      run: |
-        UPSTREAM_BRANCH=${{ github.event.inputs.upstream_branch }}
-        git fetch upstream $UPSTREAM_BRANCH
-
-    - name: Pull from upstream
-      run: |
-        UPSTREAM_BRANCH=${{ github.event.inputs.upstream_branch }}
-        git pull upstream $UPSTREAM_BRANCH
-      
-    - name: Push changes to target branch
-      run: |
-        git push origin ${{ github.event.inputs.target_branch }}
+        github_token: ${{ github.TOKEN}}
+        upstream_repository: $UPSTREAM_ORG_REPO
+        target_repository: $MIDSTREAM_ORG_REPO
+        upstream_branch: ${{ github.event.inputs.upstream_branch }}
+        target_branch: ${{ github.event.inputs.target_branch }}
+        force: false
+        tags: false
