@@ -38,8 +38,8 @@ jobs:
       uses: TobKed/github-forks-sync-action@master
       with:
         github_token: ${{ secrets.sync_upstream_token}}
-        upstream_repository: opendatahub-io/kserve
-        target_repository: rpancham/kserve
+        upstream_repository: opendatahub-io/caikit-tgis-serving
+        target_repository: rpancham/caikit-tgis-serving
         upstream_branch: ${{ github.event.inputs.upstream_branch }}
         target_branch: ${{ github.event.inputs.target_branch }}
         force: false
