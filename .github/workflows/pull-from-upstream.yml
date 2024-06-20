@@ -38,8 +38,8 @@ jobs:
       uses: TobKed/github-forks-sync-action@master
       with:
         github_token: ${{ github.TOKEN}}
-        upstream_repository: $UPSTREAM_ORG_REPO
-        target_repository: $MIDSTREAM_ORG_REPO
+        upstream_repository: opendatahub-io/kserve
+        target_repository: test-opendatahub-io/kserve
         upstream_branch: ${{ github.event.inputs.upstream_branch }}
         target_branch: ${{ github.event.inputs.target_branch }}
         force: false
