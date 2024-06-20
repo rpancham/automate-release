@@ -73,8 +73,8 @@ jobs:
 
     - name: Cherry-pick patches
       run: |
-        IFS=',' read -r -a commits <<< "${{ github.event.inputs.patch_commits }}"
-        for commit in "${commits[@]}"; do
+        commits="${{ github.event.inputs.patch_commits }}"
+        for commit in $(echo $commits | tr ',' ' '); do
           git cherry-pick $commit || { echo "Cherry-pick failed for commit $commit"; exit 1; }
         done
 
@@ -89,5 +89,5 @@ jobs:
         commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
         branch: "cherry-pick-${{ github.event.inputs.target_branch }}"
         base: ${{ github.event.inputs.target_branch }}
-        title: ${{ github.event.inputs.pr_title || 'Cherry-pick of commits into ' + github.event.inputs.target_branch }}
-        body: ${{ github.event.inputs.pr_body || 'Cherry-pick of the following commits: ' + github.event.inputs.patch_commits }}
+        title: "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}"
+        body: "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
