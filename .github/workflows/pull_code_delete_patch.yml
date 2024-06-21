@@ -1,4 +1,4 @@
-name: Pull from Upstream and Cherry-pick Patches
+name: Pull from Upstream and Remove Merged Patches
 
 on:
   workflow_dispatch:
@@ -26,9 +26,6 @@ on:
       target_branch:
         description: 'Target branch to pull into'
         required: true
-      patch_commits:
-        description: 'Comma-separated list of commit SHAs to cherry-pick'
-        required: true
       pr_title:
         description: 'Title for the PR'
         required: false
@@ -37,7 +34,7 @@ on:
         required: false
 
 jobs:
-  pull_and_cherry_pick:
+  pull_and_clean:
     runs-on: ubuntu-latest
     env:
       BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
@@ -66,27 +63,27 @@ jobs:
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
 
-    - name: Pull from upstream
+    - name: Rebase onto upstream
       run: |
-        git pull upstream ${{ github.event.inputs.upstream_branch }}
+        git rebase upstream/${{ github.event.inputs.upstream_branch }}
 
-    - name: Cherry-pick patches
+    - name: Remove merged patches
       run: |
-        commits="${{ github.event.inputs.patch_commits }}"
-        for commit in $(echo $commits | tr ',' ' '); do
-          git cherry-pick $commit || { echo "Cherry-pick failed for commit $commit"; exit 1; }
-        done
+        # List commits in target branch but not in upstream branch
+        commits=$(git log upstream/${{ github.event.inputs.upstream_branch }}..${{ github.event.inputs.target_branch }} --pretty=format:"%h")
+        # Interactive rebase to drop merged commits
+        git rebase -i upstream/${{ github.event.inputs.upstream_branch }} --autosquash
 
     - name: Push changes to target branch
       run: |
-        git push origin ${{ github.event.inputs.target_branch }}
+        git push origin ${{ github.event.inputs.target_branch }} --force
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v4
       with:
         token: ${{ secrets.PAT_TOKEN }}
-        commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
-        branch: "cherry-pick-${{ github.event.inputs.target_branch }}"
+        commit-message: "Rebase and cleanup: remove patches merged upstream"
+        branch: "cleanup-${{ github.event.inputs.target_branch }}"
         base: ${{ github.event.inputs.target_branch }}
-        title: "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}"
-        body: "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
+        title: "${{ github.event.inputs.pr_title || format('Rebase and cleanup into {}', github.event.inputs.target_branch) }}"
+        body: "${{ github.event.inputs.pr_body || 'Rebased and removed patches that were merged upstream.' }}"
