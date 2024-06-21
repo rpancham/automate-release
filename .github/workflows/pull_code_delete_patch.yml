@@ -1,0 +1,89 @@
+name: Pull from Upstream and Remove Merged Patches
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_repo:
+        description: 'Select Upstream Repository'
+        required: true
+        type: choice
+        options:
+          - 'openvino_model_server'
+          - 'kserve'
+          - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
+          - 'caikit-nlp'
+          - 'caikit'
+          - 'odh-model-controller'
+          - 'caikit-tgis-backend'
+          - 'caikit-nlp-client'
+          - 'model-registry'
+      upstream_branch:
+        description: 'Upstream branch to pull from'
+        required: true
+      target_branch:
+        description: 'Target branch to pull into'
+        required: true
+      pr_title:
+        description: 'Title for the PR'
+        required: false
+      pr_body:
+        description: 'Body for the PR'
+        required: false
+
+jobs:
+  pull_and_clean:
+    runs-on: ubuntu-latest
+    env:
+      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
+      BASE_TARGET_URL: https://github.com/red-hat-data-services/
+
+    steps:
+    - name: Set repository
+      id: set-repo
+      run: |
+        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+
+    - name: Checkout target branch
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        ref: ${{ github.event.inputs.target_branch }}
+
+    - name: Add upstream repository
+      run: |
+        git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
+        git fetch upstream
+
+    - name: Rebase onto upstream
+      run: |
+        git rebase upstream/${{ github.event.inputs.upstream_branch }}
+
+    - name: Remove merged patches
+      run: |
+        # List commits in target branch but not in upstream branch
+        commits=$(git log upstream/${{ github.event.inputs.upstream_branch }}..${{ github.event.inputs.target_branch }} --pretty=format:"%h")
+        # Interactive rebase to drop merged commits
+        git rebase -i upstream/${{ github.event.inputs.upstream_branch }} --autosquash
+
+    - name: Push changes to target branch
+      run: |
+        git push origin ${{ github.event.inputs.target_branch }} --force
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        commit-message: "Rebase and cleanup: remove patches merged upstream"
+        branch: "cleanup-${{ github.event.inputs.target_branch }}"
+        base: ${{ github.event.inputs.target_branch }}
+        title: "${{ github.event.inputs.pr_title || format('Rebase and cleanup into {}', github.event.inputs.target_branch) }}"
+        body: "${{ github.event.inputs.pr_body || 'Rebased and removed patches that were merged upstream.' }}"
