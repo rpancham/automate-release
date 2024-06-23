@@ -39,6 +39,9 @@ on:
 jobs:
   pull_and_cherry_pick:
     runs-on: ubuntu-latest
+    outputs: 
+        upstream_repo: ${{ steps.set-repo.outputs.upstream_org_repo }}
+        midstream_repo: ${{ steps.set-repo.outputs.midstream_org_repo }}
     env:
       BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
       BASE_TARGET_URL: https://github.com/red-hat-data-services/
@@ -54,39 +57,45 @@ jobs:
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
-
-    - name: Checkout target branch
-      uses: actions/checkout@v2
+    - name: Checkout temp repo
+      uses: actions/checkout@v4
       with:
-        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
-        ref: ${{ github.event.inputs.target_branch }}
+        repository: ${{ github.repository }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: temp_repo
 
     - name: Add upstream repository
       run: |
+        cd temp_repo
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
 
-    - name: Pull from upstream
+    - name: Create temporary branch from midstream
       run: |
-        git pull upstream ${{ github.event.inputs.upstream_branch }}
+        cd temp_repo
+        git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
+
 
     - name: Cherry-pick patches
       run: |
+        cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
-        for commit in $(echo $commits | tr ',' ' '); do
-          git cherry-pick $commit || { echo "Cherry-pick failed for commit $commit"; exit 1; }
+        IFS=',' read -ra commit_array <<< "$commits"
+        for commit in "${commit_array[@]}"; do
+          git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
         done
 
-    - name: Push changes to target branch
+    - name: Push changes to temporary branch 
       run: |
-        git push origin ${{ github.event.inputs.target_branch }}
+        git push origin cherry-pick-${{ github.event.inputs.patch_commits }}
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v4
+      uses: peter-evans/create-pull-request@v6
       with:
-        token: ${{ secrets.PAT_TOKEN }}
+        token: ${{ secrets.TOKEN }}
+        head: cherry-pick-${{ github.event.inputs.patch_commits }}
         commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
-        branch: "cherry-pick-${{ github.event.inputs.target_branch }}"
+        branch: cherry-pick-${{ github.event.inputs.patch_commits }}
         base: ${{ github.event.inputs.target_branch }}
         title: "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}"
         body: "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
