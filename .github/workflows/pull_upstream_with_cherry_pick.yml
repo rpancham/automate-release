@@ -82,10 +82,16 @@ jobs:
       run: |
         cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
-        IFS=',' read -ra commit_array <<< "$commits"
-        for commit in "${commit_array[@]}"; do
-          git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
-        done
+         IFS=',' read -ra commit_array <<< "$commits"
+          for commit in "${commit_array[@]}"; do
+            if git show --no-patch --format=%P $commit | grep -q ' '; then
+              echo "Cherry-picking merge commit $commit"
+              git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
+            else
+              echo "Cherry-picking regular commit $commit"
+              git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
+            fi
+          done
 
     - name: Push changes to temporary branch 
       run: |
