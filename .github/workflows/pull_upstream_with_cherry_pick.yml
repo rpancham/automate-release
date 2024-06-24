@@ -44,14 +44,16 @@ jobs:
         midstream_repo: ${{ steps.set-repo.outputs.midstream_org_repo }}
     env:
       BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-      BASE_TARGET_URL: https://github.com/red-hat-data-services/
+      # BASE_TARGET_URL: https://github.com/red-hat-data-services/
+      BASE_TARGET_URL: https://github.com/rpancham/
+  
 
     steps:
     - name: Set repository
       id: set-repo
       run: |
         echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
-        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+        echo "midstream_org_repo=rpancham/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
 
     - name: Configure Git
       run: |
