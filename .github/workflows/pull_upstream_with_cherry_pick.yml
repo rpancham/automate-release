@@ -67,25 +67,21 @@ jobs:
     - name: Checkout temp repo
       uses: actions/checkout@v4
       with:
+        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-        path: temp_repo
+        # path: temp_repo
 
     - name: Add upstream repository
       run: |
-        cd temp_repo
-        git init
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
 
     - name: Create temporary branch from midstream
       run: |
-        cd temp_repo
         git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
-
 
     - name: Cherry-pick patches
       run: |
-        cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
          IFS=',' read -ra commit_array <<< "$commits"
           for commit in "${commit_array[@]}"; do
@@ -100,14 +96,12 @@ jobs:
 
     - name: Push changes to temporary branch 
       run: |
-        cd temp_repo
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
       with:
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
         commit-message: "Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
-        path: temp_repo
         branch: cherry-pick-${{ github.event.inputs.patch_commits }}  # The branch with the cherry-picked commit
         base: ${{ github.event.inputs.target_branch }}
         title: "${{ github.event.inputs.pr_title }}  Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
