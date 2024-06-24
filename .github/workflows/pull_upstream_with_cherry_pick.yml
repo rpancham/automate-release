@@ -106,7 +106,7 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
       with:
-        token: ${{ secrets.TOKEN }}
+        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
         commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
         branch: cherry-pick-${{ github.event.inputs.patch_commits }}
         base: ${{ github.event.inputs.target_branch }}
