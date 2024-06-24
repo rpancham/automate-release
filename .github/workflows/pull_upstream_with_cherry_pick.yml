@@ -67,7 +67,7 @@ jobs:
     - name: Checkout temp repo
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.TOKEN }}
+        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
         path: temp_repo
 
     - name: Add upstream repository
