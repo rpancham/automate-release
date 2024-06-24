@@ -62,7 +62,6 @@ jobs:
     - name: Checkout temp repo
       uses: actions/checkout@v4
       with:
-        repository: ${{ github.repository }}
         token: ${{ secrets.TOKEN }}
         path: temp_repo
 
