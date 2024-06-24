@@ -112,3 +112,4 @@ jobs:
         base: ${{ github.event.inputs.target_branch }}
         title: "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}"
         body: "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
+        path: temp_repo
