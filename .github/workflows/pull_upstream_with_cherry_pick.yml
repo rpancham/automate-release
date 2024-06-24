@@ -106,9 +106,10 @@ jobs:
     - name: Create Pull Request
       run: |
         cd temp_repo
+        gh auth login
         gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
-          --head cherry-pick-${{ github.event.inputs.patch_commits }} \
           --base ${{ github.event.inputs.target_branch }} \
+          --head cherry-pick-${{ github.event.inputs.patch_commits }} \
           --title "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}" \
           --body "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
       env:
