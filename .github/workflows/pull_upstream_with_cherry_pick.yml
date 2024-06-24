@@ -110,8 +110,8 @@ jobs:
         path: temp_repo
         branch: cherry-pick-${{ github.event.inputs.patch_commits }}  # The branch with the cherry-picked commit
         base: ${{ github.event.inputs.target_branch }}
-        title: "${{ github.event.inputs.pr_title  Cherry-picked commit ${{ github.event.inputs.commit_sha }}"
+        title: "${{ github.event.inputs.pr_title }}  Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
         body: |
-          ${{ github.event.inputs.pr_body
-          This pull request cherry-picks commit ${{ github.event.inputs.commit_sha }}.
+          ${{ github.event.inputs.pr_body }}
+          This pull request cherry-picks commit ${{ github.event.inputs.patch_commits }}.
           - Please review the changes.
