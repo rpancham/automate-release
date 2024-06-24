@@ -102,14 +102,16 @@ jobs:
       run: |
         cd temp_repo
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
-      
     - name: Create Pull Request
-      run: |
-        cd temp_repo
-        gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
-          --base ${{ github.event.inputs.target_branch }} \
-          --head rpancham:cherry-pick-${{ github.event.inputs.patch_commits }} \
-          --title "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}" \
-          --body "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+        commit-message: "Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
+        path: temp_repo
+        branch: cherry-pick-${{ github.event.inputs.patch_commits }}  # The branch with the cherry-picked commit
+        base: ${{ github.event.inputs.target_branch }}
+        title: "${{ github.event.inputs.pr_title  Cherry-picked commit ${{ github.event.inputs.commit_sha }}"
+        body: |
+          ${{ github.event.inputs.pr_body
+          This pull request cherry-picks commit ${{ github.event.inputs.commit_sha }}.
+          - Please review the changes.
