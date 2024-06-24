@@ -102,15 +102,14 @@ jobs:
       run: |
         cd temp_repo
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
-
+      
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6
-      with:
-        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-        commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
-        branch: cherry-pick-${{ github.event.inputs.patch_commits }}
-        base: ${{ github.event.inputs.target_branch }}
-        title: "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}"
-        body: "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
-        path: temp_repo
-        push-to-fork: ${{ steps.set-repo.outputs.midstream_org_repo }}
+      run: |
+        cd temp_repo
+        gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
+          --head cherry-pick-${{ github.event.inputs.patch_commits }} \
+          --base ${{ github.event.inputs.target_branch }} \
+          --title "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}" \
+          --body "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
