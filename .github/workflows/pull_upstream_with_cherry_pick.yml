@@ -69,6 +69,7 @@ jobs:
     - name: Add upstream repository
       run: |
         cd temp_repo
+        git init
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
 
