@@ -100,7 +100,7 @@ jobs:
           else
             # Push the new branch with the revert commits
             git push -f origin revert-merge-${{ github.event.inputs.commit_sha }}
-
+          fi
       - name: Create Pull Request to apply the reverts
         if: ${{ github.event.inputs.action_type == 'pr' }}
         run: |
