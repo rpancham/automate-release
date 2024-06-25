@@ -29,12 +29,6 @@ on:
       patch_commits:
         description: 'Comma-separated list of commit SHAs to cherry-pick'
         required: true
-      pr_title:
-        description: 'Title for the PR'
-        required: false
-      pr_body:
-        description: 'Body for the PR'
-        required: false
 
 permissions:
   contents: write
@@ -65,14 +59,13 @@ jobs:
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
         
-    - name: Checkout temp repo
+    - name: Checkout repo
       uses: actions/checkout@v4
       with:
         repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-        # path: temp_repo
 
-    - name: Add upstream repository
+    - name: Add upstream repository & create cherry pick branch
       run: |
         if git merge-base --is-ancestor ${{ github.event.inputs.patch_commits }} origin/${{ github.event.inputs.target_branch }}; then
           echo "Commit already exists in the target branch."
@@ -80,12 +73,9 @@ jobs:
         fi
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
-
-    - name: Create temporary branch from midstream
-      run: |
         git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
 
-    - name: Cherry-pick patches
+    - name: Cherry-pick commits
       run: |
         commits="${{ github.event.inputs.patch_commits }}"
          IFS=',' read -ra commit_array <<< "$commits"
@@ -99,29 +89,14 @@ jobs:
             fi
           done
 
-    - name: Push changes to temporary branch 
+    - name: Push changes to cherry pick branch & Create a PR
       run: |
-        git status
         git log -n 1 --pretty=format:"%H - %s"
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
         gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
           --head cherry-pick-${{ github.event.inputs.patch_commits }} \
           --base ${{ github.event.inputs.target_branch }} \
-          --title "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}" \
-          --body "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
+          --title "Cherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}" \
+          --body "This is a auto genrated PR\nRunning from odh-automation-serving\nCherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-
-        
-    # - name: Create Pull Request
-    #   uses: peter-evans/create-pull-request@v6
-    #   with:
-    #     token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-    #     commit-message: "Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
-    #     branch: cherry-pick-${{ github.event.inputs.patch_commits }}  # The branch with the cherry-picked commit
-    #     base: ${{ github.event.inputs.target_branch }}
-    #     title: "${{ github.event.inputs.pr_title }}  Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
-    #     body: |
-    #       ${{ github.event.inputs.pr_body }}
-    #       This pull request cherry-picks commit ${{ github.event.inputs.patch_commits }}.
-    #       - Please review the changes.
