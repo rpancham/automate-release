@@ -96,16 +96,23 @@ jobs:
 
     - name: Push changes to temporary branch 
       run: |
+        git status
+        git log -n 1 --pretty=format:"%H - %s"
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6
-      with:
-        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-        commit-message: "Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
-        branch: cherry-pick-${{ github.event.inputs.patch_commits }}  # The branch with the cherry-picked commit
-        base: ${{ github.event.inputs.target_branch }}
-        title: "${{ github.event.inputs.pr_title }}  Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
-        body: |
-          ${{ github.event.inputs.pr_body }}
-          This pull request cherry-picks commit ${{ github.event.inputs.patch_commits }}.
-          - Please review the changes.
+        hub pull-request -b ${{ github.event.inputs.target_branch }} -h cherry-pick-${{ github.event.inputs.patch_commits }} -m "${{ github.event.inputs.pr_title }}\n\n${{ github.event.inputs.pr_body }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+
+        
+    # - name: Create Pull Request
+    #   uses: peter-evans/create-pull-request@v6
+    #   with:
+    #     token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+    #     commit-message: "Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
+    #     branch: cherry-pick-${{ github.event.inputs.patch_commits }}  # The branch with the cherry-picked commit
+    #     base: ${{ github.event.inputs.target_branch }}
+    #     title: "${{ github.event.inputs.pr_title }}  Cherry-picked commit ${{ github.event.inputs.patch_commits }}"
+    #     body: |
+    #       ${{ github.event.inputs.pr_body }}
+    #       This pull request cherry-picks commit ${{ github.event.inputs.patch_commits }}.
+    #       - Please review the changes.
