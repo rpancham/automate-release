@@ -103,7 +103,7 @@ jobs:
           --head cherry-pick-${{ github.event.inputs.patch_commits }} \
           --base ${{ github.event.inputs.target_branch }} \
           --title "Cherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}" \
-          --body "This is a auto genrated PR\nRunning from odh-automation-serving\nCherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
+          --body "$(echo -e "This is a auto genrated PR, Creating from odh-automation-serving\nCherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}")"
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
