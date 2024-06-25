@@ -29,12 +29,11 @@ on:
       patch_commits:
         description: 'Comma-separated list of commit SHAs to cherry-pick'
         required: true
-      pr_title:
-        description: 'Title for the PR'
-        required: false
-      pr_body:
-        description: 'Body for the PR'
-        required: false
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
 
 jobs:
   pull_and_cherry_pick:
@@ -44,58 +43,68 @@ jobs:
         midstream_repo: ${{ steps.set-repo.outputs.midstream_org_repo }}
     env:
       BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-      BASE_TARGET_URL: https://github.com/red-hat-data-services/
+      # BASE_TARGET_URL: https://github.com/red-hat-data-services/
+      BASE_TARGET_URL: https://github.com/rpancham/
+  
 
     steps:
     - name: Set repository
       id: set-repo
       run: |
         echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
-        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+        echo "midstream_org_repo=rpancham/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
 
-    - name: Configure Git
+    - name: Configure Git & install hub
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
-    - name: Checkout temp repo
+        
+    - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        repository: ${{ github.repository }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: temp_repo
+        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
-    - name: Add upstream repository
+  
+    - name: Add upstream repository & create cherry pick branch
       run: |
-        cd temp_repo
+
+        if git merge-base --is-ancestor ${{ github.event.inputs.patch_commits }} origin/${{ github.event.inputs.target_branch }}; then
+          echo "Commit already exists in the target branch."
+          exit 1
+        fi
+
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
-
-    - name: Create temporary branch from midstream
-      run: |
-        cd temp_repo
         git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
 
+    - name: Cherry-pick commits
 
-    - name: Cherry-pick patches
       run: |
         cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
-        IFS=',' read -ra commit_array <<< "$commits"
-        for commit in "${commit_array[@]}"; do
-          git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
-        done
 
-    - name: Push changes to temporary branch 
+         IFS=',' read -ra commit_array <<< "$commits"
+          for commit in "${commit_array[@]}"; do
+            if git show --no-patch --format=%P $commit | grep -q ' '; then
+              echo "Cherry-picking merge commit $commit"
+              git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
+            else
+              echo "Cherry-picking regular commit $commit"
+              git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
+            fi
+          done
+
+    - name: Push changes to cherry pick branch & Create a PR
       run: |
-        git push origin cherry-pick-${{ github.event.inputs.patch_commits }}
+        git log -n 1 --pretty=format:"%H - %s"
+        git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
+        gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
+          --head cherry-pick-${{ github.event.inputs.patch_commits }} \
+          --base ${{ github.event.inputs.target_branch }} \
+          --title "Cherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}" \
+          --body "This is a auto genrated PR\nRunning from odh-automation-serving\nCherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6
-      with:
-        token: ${{ secrets.TOKEN }}
-        head: cherry-pick-${{ github.event.inputs.patch_commits }}
-        commit-message: "Cherry-pick of commits: ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
-        branch: cherry-pick-${{ github.event.inputs.patch_commits }}
-        base: ${{ github.event.inputs.target_branch }}
-        title: "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}"
-        body: "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
+       

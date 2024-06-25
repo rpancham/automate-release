@@ -26,75 +26,81 @@ on:
       target_branch:
         description: 'Target branch to pull into'
         required: true
-      pr_title:
-        description: 'Title for the PR'
-        required: false
-      pr_body:
-        description: 'Body for the PR'
-        required: false
+      commit_sha:
+        description: 'The merge commit SHA to delete'
+        required: true
+      action_type:
+        description: 'Specify if the changes should be pushed directly or through a pull request'
+        required: true
+        default: 'pr'
+        options: ['pr', 'push']
 
 jobs:
   pull_and_clean:
     runs-on: ubuntu-latest
-    env:
-      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/  # Replace with your actual upstream base URL if different
-      BASE_TARGET_URL: https://github.com/red-hat-data-services/  # Replace with your target repo owner
-
     steps:
       - name: Set repository
         id: set-repo
         run: |
-          echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> <span class="math-inline">GITHUB\_OUTPUT
-echo "target\_org\_repo\=red\-hat\-data\-services/</span>{{ github.event.inputs.target_branch }}" >> $GITHUB_OUTPUT  # Use target_branch for target repo
+          echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
 
       - name: Configure Git
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-      - name: Checkout target branch
-        uses: actions/checkout@v2
+          
+      - name: sync
+        uses: TobKed/github-forks-sync-action@master
+        with:
+          github_token: ${{ secrets.sync_upstream_token}}
+          upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
+          target_repository: ${{ steps.set-repo.outputs.target_org_repo }}
+          upstream_branch: ${{ github.event.inputs.upstream_branch }}
+          target_branch: ${{ github.event.inputs.target_branch }}
+          force: false
+          tags: false
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
           repository: ${{ steps.set-repo.outputs.target_org_repo }}
           ref: ${{ github.event.inputs.target_branch }}
+          token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+          fetch-depth: 0
 
-      - name: Add upstream repository
+      - name: Revert the merge commit
         run: |
-          git remote add upstream <span class="math-inline">\{\{ env\.BASE\_UPSTREAM\_URL \}\}</span>{{ github.event.inputs.upstream_repo }}.git
-          git fetch upstream
+          if [ "${{ github.event.inputs.action_type }}" = "pr" ]; then
+            git checkout -b revert-merge-${{ github.event.inputs.commit_sha }}
+          fi
+          
+          # Revert the specified merge commit
+          patch_commits="${{ github.event.inputs.commit_sha }}"
+          IFS=',' read -ra commits <<< "$patch_commits"
+          for commit in "${commits[@]}"; do
+            git revert $commit --no-edit || git revert --abort
+          done
+          
+          # Commit the revert
+          git commit -m "Revert merge commit ${{ github.event.inputs.commit_sha }}"
 
-      - name: Find our merge commit (optional)
-        id: find_merge_commit
+      - name: Push changes
         run: |
-          our_merge_commit=$(git log --merges --grep="^Merge pull request" --first-parent origin/main..HEAD)
-          if [[ -z "$our_merge_commit" ]]; then
-            echo "No downstream patch merge commit found."
+          if [ "${{ github.event.inputs.action_type }}" = "push" ]; then
+            git push -f origin ${{ github.event.inputs.target_branch }}
           else
-            echo "Our merge commit: $our_merge_commit"
-          fi
-        outputs:
-          our_merge_commit: ${{ steps.find_merge_commit.outputs.our_merge_commit }}
+            # Push the new branch with the revert commits
+            git push origin revert-merge-${{ github.event.inputs.commit_sha }}
 
-      - name: Cherry-pick upstream changes (interactive)
+      - name: Create Pull Request to apply the reverts
+        if: ${{ github.event.inputs.action_type == 'pr' }}
         run: |
-          git fetch upstream
-          git checkout <span class="math-inline">\{\{ github\.event\.inputs\.target\_branch \}\}
-git cherry\-pick \-\-interactive upstream/</span>{{ github.event.inputs.upstream_branch }}
+          gh pr create --repo ${{ steps.set-repo.outputs.target_org_repo }} \
+          --head cherry-pick-${{ github.event.inputs.commit_sha }} \
+          --base ${{ github.event.inputs.target_branch }} \
+          --title "Revert ${{ github.event.inputs.commit_sha }} merge commits" \
+          --body "This is a auto genrated PR\nRunning from odh-automation-serving\nThis PR reverts the specified merge commits from the branch ${{ github.event.inputs.target_branch }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
-          # In the editor, review commits and skip our_merge_commit (if found)
-          if [[ -n "${{ steps.find_merge_commit.outputs.our_merge_commit }}" ]]; then
-            echo "Skipping our downstream merge commit: ${{ steps.find_merge_commit.outputs.our_merge_commit }}"
-            git cherry-pick --skip ${{ steps.find_merge_commit.outputs.our_merge_commit }}
-          fi
-
-      - name: Push changes to target branch
-        run: |
-          git push origin ${{ github.event.inputs.target_branch }}
-
-      - name: Create Pull Request (Optional)
-        uses: peter-evans/create-pull-request@v4
-        if: ${{ github.event.inputs.pr_title || github.event.inputs.pr_body }}  # Only create PR if title or body is provided
-        with:
-          token: <span class="math-inline">\{\{ secrets\.PAT\_TOKEN \}\}
-commit\-message\: "Rebase and cleanup\: remove patches merged upstream"
-branch\: "cleanup\-</span>{{ github.
+         
