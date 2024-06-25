@@ -37,53 +37,60 @@ jobs:
   pull_and_clean:
     runs-on: ubuntu-latest
     env:
-      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-      BASE_TARGET_URL: https://github.com/red-hat-data-services/
+      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/  # Replace with your actual upstream base URL if different
+      BASE_TARGET_URL: https://github.com/red-hat-data-services/  # Replace with your target repo owner
 
     steps:
-    - name: Set repository
-      id: set-repo
-      run: |
-        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
-        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+      - name: Set repository
+        id: set-repo
+        run: |
+          echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+          echo "target_org_repo=red-hat-data-services/${{ github.event.inputs.target_branch }}" >> $GITHUB_OUTPUT  # Use target_branch for target repo
 
-    - name: Configure Git
-      run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
 
-    - name: Checkout target branch
-      uses: actions/checkout@v2
-      with:
-        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
-        ref: ${{ github.event.inputs.target_branch }}
+      - name: Checkout target branch
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ steps.set-repo.outputs.target_org_repo }}
+          ref: ${{ github.event.inputs.target_branch }}
 
-    - name: Add upstream repository
-      run: |
-        git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
-        git fetch upstream
+      - name: Add upstream repository
+        run: |
+          git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
+          git fetch upstream
 
-    - name: Rebase onto upstream
-      run: |
-        git rebase upstream/${{ github.event.inputs.upstream_branch }}
+      - name: Rebase onto upstream
+        run: |
+          git rebase upstream/${{ github.event.inputs.upstream_branch }}
 
-    - name: Remove merged patches
-      run: |
-        # List commits in target branch but not in upstream branch
-        commits=$(git log upstream/${{ github.event.inputs.upstream_branch }}..${{ github.event.inputs.target_branch }} --pretty=format:"%h")
-        # Interactive rebase to drop merged commits
-        git rebase -i upstream/${{ github.event.inputs.upstream_branch }} --autosquash
+      - name: Remove merged patches
+        run: |
+          # List commits in target branch but not in upstream branch
+          merged_commits=$(git log upstream/${{ github.event.inputs.upstream_branch }}..${{ github.event.inputs.target_branch }} --pretty=format:"%h")
+          if [[ -z "$merged_commits" ]]; then
+            echo "No merged commits found in target branch."
+          else
+            echo "Following commits will be removed:"
+            echo "$merged_commits"
+            # Interactive rebase to drop merged commits
+            git rebase -i upstream/${{ github.event.inputs.upstream_branch }} --autosquash
+          fi
 
-    - name: Push changes to target branch
-      run: |
-        git push origin ${{ github.event.inputs.target_branch }} --force
+      - name: Push changes to target branch
+        run: |
+          git push origin ${{ github.event.inputs.target_branch }} --force  # Force push with caution
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v4
-      with:
-        token: ${{ secrets.PAT_TOKEN }}
-        commit-message: "Rebase and cleanup: remove patches merged upstream"
-        branch: "cleanup-${{ github.event.inputs.target_branch }}"
-        base: ${{ github.event.inputs.target_branch }}
-        title: "${{ github.event.inputs.pr_title || format('Rebase and cleanup into {}', github.event.inputs.target_branch) }}"
-        body: "${{ github.event.inputs.pr_body || 'Rebased and removed patches that were merged upstream.' }}"
+      - name: Create Pull Request (Optional)
+        uses: peter-evans/create-pull-request@v4
+        if: ${{ github.event.inputs.pr_title || github.event.inputs.pr_body }}  # Only create PR if title or body is provided
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: "Rebase and cleanup: remove patches merged upstream"
+          branch: "cleanup-${{ github.event.inputs.target_branch }}"
+          base: ${{ github.event.inputs.target_branch }}
+          title: "${{ github.event.inputs.pr_title || format('Rebase and cleanup into {}', github.event.inputs.target_branch) }}"
+          body: "${{ github.event.inputs.pr_body || 'Rebased and removed patches that were merged upstream.' }}"
