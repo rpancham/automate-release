@@ -94,3 +94,95 @@ jobs:
           base: ${{ github.event.inputs.target_branch }}
           title: "${{ github.event.inputs.pr_title || format('Rebase and cleanup into {}', github.event.inputs.target_branch) }}"
           body: "${{ github.event.inputs.pr_body || 'Rebased and removed patches that were merged upstream.' }}"
+
+
+
+
+
+####chat gpt 
+
+name: Pull from Upstream and Delete Merged Patches
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_repo:
+        description: 'Select Upstream Repository'
+        required: true
+        type: choice
+        options:
+          - 'openvino_model_server'
+          - 'kserve'
+          - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
+          - 'caikit-nlp'
+          - 'caikit'
+          - 'odh-model-controller'
+          - 'caikit-tgis-backend'
+          - 'caikit-nlp-client'
+          - 'model-registry'
+      upstream_branch:
+        description: 'Upstream branch to pull from'
+        required: true
+      target_branch:
+        description: 'Target branch to pull into'
+        required: true
+      patch_commits:
+        description: 'Comma-separated list of commit SHAs to cherry-pick'
+        required: true
+      pr_title:
+        description: 'Title for the PR'
+        required: false
+      pr_body:
+        description: 'Body for the PR'
+        required: false
+
+jobs:
+  pull_and_update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.target_branch }}
+
+      - name: Set up git configuration
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/${{ github.event.inputs.upstream_repo }}.git
+          git fetch upstream
+
+      - name: Pull from upstream branch
+        run: |
+          git pull upstream ${{ github.event.inputs.upstream_branch }}
+
+      - name: Remove downstream patches
+        run: |
+          patch_commits="${{ github.event.inputs.patch_commits }}"
+          IFS=',' read -ra commits <<< "$patch_commits"
+          for commit in "${commits[@]}"; do
+            if git branch upstream_temp --contains $commit >/dev/null 2>&1; then
+              git revert $commit --no-edit || git revert --abort
+            fi
+          done
+
+      - name: Push changes
+        run: |
+          git push origin HEAD:${{ github.event.inputs.target_branch }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Update from upstream and remove merged patches'
+          branch: ${{ github.event.inputs.target_branch }}
+          title: ${{ github.event.inputs.pr_title || 'Update from upstream and remove merged patches' }}
+          body: ${{ github.event.inputs.pr_body || 'This PR includes updates from the upstream repository and removes patches that have been merged upstream.' }}
+
