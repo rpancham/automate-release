@@ -82,7 +82,11 @@ jobs:
           patch_commits="${{ github.event.inputs.commit_sha }}"
           IFS=',' read -ra commits <<< "$patch_commits"
           for commit in "${commits[@]}"; do
-            git revert $commit --no-edit || git revert --abort
+            if git show -s --pretty=%P $commit | grep -q ' '; then
+              git revert -m 1 $commit --no-edit || git revert --abort
+            else
+              git revert $commit --no-edit || git revert --abort
+            fi
           done
           
           # Commit the revert
