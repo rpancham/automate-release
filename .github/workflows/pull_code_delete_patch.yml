@@ -77,7 +77,6 @@ jobs:
 
       - name: Revert the merge commit
         run: |
-          set -e
           if [ "${{ github.event.inputs.action_type }}" = "pr" ]; then
             git checkout -b revert-merge-${{ github.event.inputs.commit_sha }}
           fi
@@ -93,22 +92,14 @@ jobs:
               git revert $commit --no-edit || { echo "Failed to revert commit $commit"; exit 1; }
             fi
           done
-          echo "===revert"
-          # Commit the revert
-          if git status --porcelain | grep .; then
-          git commit -m "Revert merge commit ${{ github.event.inputs.commit_sha }}"
-          else
-            echo "===No changes to commit"
-          fi
-          git log -n 5
-
+          
       - name: Push changes
         run: |
           if [ "${{ github.event.inputs.action_type }}" = "push" ]; then
             git push -f origin ${{ github.event.inputs.target_branch }}
           else
             # Push the new branch with the revert commits
-            git push origin revert-merge-${{ github.event.inputs.commit_sha }}
+            git push -f origin revert-merge-${{ github.event.inputs.commit_sha }}
 
       - name: Create Pull Request to apply the reverts
         if: ${{ github.event.inputs.action_type == 'pr' }}
@@ -120,5 +111,3 @@ jobs:
           --body "This is a auto genrated PR\nRunning from odh-automation-serving\nThis PR reverts the specified merge commits from the branch ${{ github.event.inputs.target_branch }}"
         env:
           GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-
-         
