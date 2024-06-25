@@ -1,4 +1,4 @@
-name: Pull from Upstream and Remove Merged Patches
+name: Pull Upstream and Remove Merged Downstream Patches
 
 on:
   workflow_dispatch:
@@ -84,7 +84,6 @@ jobs:
           # Commit the revert
           git commit -m "Revert merge commit ${{ github.event.inputs.commit_sha }}"
 
-
       - name: Push changes
         run: |
           if [ "${{ github.event.inputs.action_type }}" = "push" ]; then
@@ -103,3 +102,5 @@ jobs:
           --body "This is a auto genrated PR\nRunning from odh-automation-serving\nThis PR reverts the specified merge commits from the branch ${{ github.event.inputs.target_branch }}"
         env:
           GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+
+         

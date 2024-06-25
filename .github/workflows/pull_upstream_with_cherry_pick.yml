@@ -65,19 +65,25 @@ jobs:
         repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
+  
     - name: Add upstream repository & create cherry pick branch
       run: |
+
         if git merge-base --is-ancestor ${{ github.event.inputs.patch_commits }} origin/${{ github.event.inputs.target_branch }}; then
           echo "Commit already exists in the target branch."
           exit 1
         fi
+
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
         git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
 
     - name: Cherry-pick commits
+
       run: |
+        cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
+
          IFS=',' read -ra commit_array <<< "$commits"
           for commit in "${commit_array[@]}"; do
             if git show --no-patch --format=%P $commit | grep -q ' '; then
@@ -100,3 +106,5 @@ jobs:
           --body "This is a auto genrated PR\nRunning from odh-automation-serving\nCherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}"
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+
+       
