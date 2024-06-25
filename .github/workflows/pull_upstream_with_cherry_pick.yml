@@ -64,9 +64,6 @@ jobs:
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
-        sudo apt-get update
-        sudo apt-get install -y hub
-        hub version
         
     - name: Checkout temp repo
       uses: actions/checkout@v4
@@ -107,7 +104,11 @@ jobs:
         git status
         git log -n 1 --pretty=format:"%H - %s"
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
-        hub pull-request -b ${{ github.event.inputs.target_branch }} -h cherry-pick-${{ github.event.inputs.patch_commits }} -m "${{ github.event.inputs.pr_title }}\n\n${{ github.event.inputs.pr_body }}"
+        gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
+          --head cherry-pick-${{ github.event.inputs.patch_commits }} \
+          --base ${{ github.event.inputs.target_branch }} \
+          --title "${{ github.event.inputs.pr_title || format('Cherry-pick of commits into {}', github.event.inputs.target_branch) }}" \
+          --body "${{ github.event.inputs.pr_body || format('Cherry-pick of the following commits: {}', github.event.inputs.patch_commits) }}"
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
