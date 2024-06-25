@@ -33,7 +33,10 @@ on:
         description: 'Specify if the changes should be pushed directly or through a pull request'
         required: true
         default: 'pr'
-        options: ['pr', 'push']
+        type: choice
+        options:
+          - 'pr'
+          - 'push'
 permissions:
   contents: write
   packages: write
