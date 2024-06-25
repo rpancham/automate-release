@@ -77,10 +77,11 @@ jobs:
 
       - name: Revert the merge commit
         run: |
+          set -e
           if [ "${{ github.event.inputs.action_type }}" = "pr" ]; then
             git checkout -b revert-merge-${{ github.event.inputs.commit_sha }}
           fi
-          
+
           # Revert the specified merge commit
           patch_commits="${{ github.event.inputs.commit_sha }}"
           IFS=',' read -ra commits <<< "$patch_commits"
@@ -91,9 +92,11 @@ jobs:
               git revert $commit --no-edit || git revert --abort
             fi
           done
-          
+          git status
+          echo "revert"
           # Commit the revert
           git commit -m "Revert merge commit ${{ github.event.inputs.commit_sha }}"
+          git log -n 5
 
       - name: Push changes
         run: |
