@@ -86,16 +86,20 @@ jobs:
           patch_commits="${{ github.event.inputs.commit_sha }}"
           IFS=',' read -ra commits <<< "$patch_commits"
           for commit in "${commits[@]}"; do
+            echo "Reverting commit: $commit"
             if git show -s --pretty=%P $commit | grep -q ' '; then
-              git revert -m 1 $commit --no-edit || git revert --abort
+              git revert -m 1 $commit --no-edit || { echo "Failed to revert merge commit $commit"; exit 1; }
             else
-              git revert $commit --no-edit || git revert --abort
+              git revert $commit --no-edit || { echo "Failed to revert commit $commit"; exit 1; }
             fi
           done
-          git status
-          echo "revert"
+          echo "===revert"
           # Commit the revert
+          if git status --porcelain | grep .; then
           git commit -m "Revert merge commit ${{ github.event.inputs.commit_sha }}"
+          else
+            echo "===No changes to commit"
+          fi
           git log -n 5
 
       - name: Push changes
