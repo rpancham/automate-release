@@ -60,10 +60,14 @@ jobs:
         echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
         echo "midstream_org_repo=rpancham/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
 
-    - name: Configure Git
+    - name: Configure Git & install hub
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
+        sudo apt-get update
+        sudo apt-get install -y hub
+        hub version
+        
     - name: Checkout temp repo
       uses: actions/checkout@v4
       with:
@@ -73,6 +77,10 @@ jobs:
 
     - name: Add upstream repository
       run: |
+        if git merge-base --is-ancestor ${{ github.event.inputs.patch_commits }} origin/${{ github.event.inputs.target_branch }}; then
+          echo "Commit already exists in the target branch."
+          exit 1
+        fi
         git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
         git fetch upstream
 
