@@ -1,0 +1,60 @@
+name:Force push most recent commit to trigger openshift-ci to rebuild images
+on:
+  workflow_dispatch:
+    inputs:
+      downstream_repo:
+        description: 'Select downstream Repository'
+        required: true
+        type: choice
+        options:
+          - 'openvino_model_server'
+          - 'kserve'
+          - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
+          - 'caikit-nlp'
+          - 'caikit'
+          - 'odh-model-controller'
+          - 'caikit-tgis-backend'
+          - 'caikit-nlp-client'
+          - 'model-registry'
+      downstream_branch:
+        description: 'downstream_branch branch to Force-push the amended commit'
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  create-upstream-pr:
+    runs-on: ubuntu-latest
+    outputs: 
+        upstream_repo: ${{ steps.set-repo.outputs.upstream_org_repo }}
+        midstream_repo: ${{ steps.set-repo.outputs.downstream_org_repo }}
+    steps:
+    - name: Set repository
+      id: set-repo
+      run: |
+        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
+        echo "downstream_org_repo=rpancham/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
+
+    - name: Configure Git & install hub
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ steps.set-repo.outputs.downstream_org_repo }}
+        token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+
+    - name: Amend the last commit & Force-push the amended commit
+      run: |
+        git commit --amend --no-edit
+        git push --force origin ${{ github.event.inputs.downstream_branch }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
