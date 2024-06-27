@@ -1,4 +1,4 @@
-name:Force push most recent commit to trigger openshift-ci to rebuild images
+name: Force push most recent commit to trigger openshift-ci to rebuild images
 on:
   workflow_dispatch:
     inputs:
