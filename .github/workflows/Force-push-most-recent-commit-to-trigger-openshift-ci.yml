@@ -54,7 +54,8 @@ jobs:
 
     - name: Amend the last commit & Force-push the amended commit
       run: |
+        git fetch --unshallow
         git commit --amend --no-edit
-        git push --force origin ${{ github.event.inputs.downstream_branch }}
+        git push --force-with-lease origin ${{ github.event.inputs.downstream_branch }}
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
