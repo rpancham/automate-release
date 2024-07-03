@@ -3,23 +3,30 @@ name: Demo Pull from Upstream
 on:
   workflow_dispatch:
     inputs:
-      midstream_repo:
+      upstream_repo:
         description: 'Select Upstream Repository'
         required: true
         type: choice
         options:
-          - 'openvino_model_server'
-          - 'kserve'
-          - 'modelmesh'
+          - 'openvinotoolkit/openvino_model_server'
+          - 'kserve/kserve'
+          - 'kserve/modelmesh'
           - 'caikit-tgis-serving'
-          - 'openvino'
-          - 'vllm'
-          - 'caikit-nlp'
-          - 'caikit'
+          - 'openvinotoolkit/openvino'
+          - 'vllm-project/vllm'
+          - 'caikit/caikit-nlp'
+          - 'caikit/caikit'
           - 'odh-model-controller'
-          - 'caikit-tgis-backend'
+          - 'caikit/caikit-tgis-backend'
           - 'caikit-nlp-client'
-          - 'model-registry'
+          - 'kubeflow/model-registry'
+      sync_repo:
+        description: 'Select Repository sync choice'
+        required: true
+        type: choice
+        options:
+          - 'Upstream->Midstream'
+          - 'Midstream->Downstream'
       upstream_branch:
         description: 'Upstream branch to pull from'
         required: true
@@ -34,28 +41,27 @@ jobs:
   pull:
     runs-on: ubuntu-latest
     outputs: 
-        upstream_repo: ${{ steps.set-repo.outputs.upstream_org_repo }}
-        midstream_repo: ${{ steps.set-repo.outputs.midstream_org_repo }}
         target_repo: ${{ steps.set-repo.outputs.target_org_repo }}
     steps:
     - name: Set repository
       id: set-repo
       run: |
-        echo "upstream_org_repo=$( \
-          case ${{ github.event.inputs.upstream_repo }} in \
-            'openvino_model_server') echo 'openvinotoolkit/model_server' ;; \
-            'kserve') echo 'kserve/kserve' ;; \
-            'modelmesh') echo 'kserve/modelmesh' ;; \
-            'openvino') echo 'openvinotoolkit/openvino' ;; \
-            'vllm') echo 'vllm-project/vllm' ;; \
-            'caikit-nlp') echo 'caikit/caikit-nlp' ;; \
-            'caikit') echo 'caikit/caikit' ;; \
-            'caikit-tgis-backend') echo 'caikit/caikit-tgis-backend' ;; \
-            'model-registry') echo 'kubeflow/model-registry' ;; \
-          esac \
-        )" >> $GITHUB_OUTPUT
-        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
-        echo "target_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+        if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
+          IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
+        else
+          # No delimiter in the string, assign the whole string to part1
+          repoName=${{ github.event.inputs.upstream_repo }
+          upstreamOwner=""
+        fi
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream" ]]; then
+          echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"
+          echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
+        else
+          echo "upstream_org_repo=opendatahub-io/$repoName"
+          echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
+        fi
+        
+
     - name: Set git config
       run: |
           git config --global user.name "github-actions"
@@ -65,7 +71,7 @@ jobs:
       with:
         github_token: ${{ secrets.PAT_TOKEN }}
         upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
-        midstream_repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        midstream_repository: ${{ steps.set-repo.outputs.target_org_repo }}
         upstream_branch: ${{ github.event.inputs.upstream_branch }}
         target_branch: ${{ github.event.inputs.target_branch }}
         force: false
