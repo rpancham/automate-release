@@ -1,4 +1,4 @@
-name: Pull from Upstream
+name: Demo Pull from Upstream
 
 on:
   workflow_dispatch:
