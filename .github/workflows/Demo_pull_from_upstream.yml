@@ -50,7 +50,7 @@ jobs:
           IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
         else
           # No delimiter in the string, assign the whole string to part1
-          repoName=${{ github.event.inputs.upstream_repo }
+          repoName=${{ github.event.inputs.upstream_repo }}
           upstreamOwner=""
         fi
         if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream" ]]; then
