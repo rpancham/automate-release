@@ -1,0 +1,72 @@
+name: Pull from Upstream
+
+on:
+  workflow_dispatch:
+    inputs:
+      midstream_repo:
+        description: 'Select Upstream Repository'
+        required: true
+        type: choice
+        options:
+          - 'openvino_model_server'
+          - 'kserve'
+          - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
+          - 'caikit-nlp'
+          - 'caikit'
+          - 'odh-model-controller'
+          - 'caikit-tgis-backend'
+          - 'caikit-nlp-client'
+          - 'model-registry'
+      upstream_branch:
+        description: 'Upstream branch to pull from'
+        required: true
+      midstream_branch:
+        description: 'midstream branch to pull into'
+        required: false
+      target_branch:
+        description: 'Target branch to pull into'
+        required: true
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    outputs: 
+        upstream_repo: ${{ steps.set-repo.outputs.upstream_org_repo }}
+        midstream_repo: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        target_repo: ${{ steps.set-repo.outputs.target_org_repo }}
+    steps:
+    - name: Set repository
+      id: set-repo
+      run: |
+        echo "upstream_org_repo=$( \
+          case ${{ github.event.inputs.upstream_repo }} in \
+            'openvino_model_server') echo 'openvinotoolkit/model_server' ;; \
+            'kserve') echo 'kserve/kserve' ;; \
+            'modelmesh') echo 'kserve/modelmesh' ;; \
+            'openvino') echo 'openvinotoolkit/openvino' ;; \
+            'vllm') echo 'vllm-project/vllm' ;; \
+            'caikit-nlp') echo 'caikit/caikit-nlp' ;; \
+            'caikit') echo 'caikit/caikit' ;; \
+            'caikit-tgis-backend') echo 'caikit/caikit-tgis-backend' ;; \
+            'model-registry') echo 'kubeflow/model-registry' ;; \
+          esac \
+        )" >> $GITHUB_OUTPUT
+        echo "midstream_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+        echo "target_org_repo=red-hat-data-services/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
+    - name: Set git config
+      run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+    - name: sync
+      uses: TobKed/github-forks-sync-action@master
+      with:
+        github_token: ${{ secrets.PAT_TOKEN }}
+        upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
+        midstream_repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        upstream_branch: ${{ github.event.inputs.upstream_branch }}
+        target_branch: ${{ github.event.inputs.target_branch }}
+        force: false
+        tags: false
