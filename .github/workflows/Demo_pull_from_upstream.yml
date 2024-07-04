@@ -55,10 +55,12 @@ jobs:
         fi
         if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream" ]]; then
           echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"
-          echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
+          # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
         else
           echo "upstream_org_repo=opendatahub-io/$repoName"
-          echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
+          # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpanchams/$repoName" >> $GITHUB_OUTPUT
         fi
         
 
