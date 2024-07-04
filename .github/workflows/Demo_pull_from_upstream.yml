@@ -73,7 +73,7 @@ jobs:
       with:
         github_token: ${{ secrets.PAT_TOKEN }}
         upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
-        midstream_repository: ${{ steps.set-repo.outputs.target_org_repo }}
+        target_repository: ${{ steps.set-repo.outputs.target_org_repo }}
         upstream_branch: ${{ github.event.inputs.upstream_branch }}
         target_branch: ${{ github.event.inputs.target_branch }}
         force: false
