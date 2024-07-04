@@ -8,20 +8,27 @@ on:
         required: true
         type: choice
         options:
-          - 'openvino_model_server'
-          - 'kserve'
-          - 'modelmesh'
+          - 'openvinotoolkit/model_server'
+          - 'kserve/kserve'
+          - 'kserve/modelmesh'
           - 'caikit-tgis-serving'
-          - 'openvino'
-          - 'vllm'
-          - 'caikit-nlp'
-          - 'caikit'
+          - 'openvinotoolkit/openvino'
+          - 'vllm-project/vllm'
+          - 'caikit/caikit-nlp'
+          - 'caikit/caikit'
           - 'odh-model-controller'
-          - 'caikit-tgis-backend'
+          - 'caikit/caikit-tgis-backend'
           - 'caikit-nlp-client'
-          - 'model-registry'
-      upstream_branch:
-        description: 'Upstream branch to pull from'
+          - 'kubeflow/model-registry'
+      Pull_and_cherrypick:
+        description: 'Select Repository to Pull_and_cherrypick'
+        required: true
+        type: choice
+        options:
+          - 'Upstream->Midstream(opendatahub-io)'
+          - 'Midstream(opendatahub-io)->Downstream(red-hat-data-services)'
+      source_branch:
+        description: 'Source branch to pull from'
         required: true
       target_branch:
         description: 'Target branch to pull into'
@@ -39,21 +46,30 @@ jobs:
   pull_and_cherry_pick:
     runs-on: ubuntu-latest
     outputs: 
-        upstream_repo: ${{ steps.set-repo.outputs.upstream_org_repo }}
-        midstream_repo: ${{ steps.set-repo.outputs.midstream_org_repo }}
-    env:
-      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-      # BASE_TARGET_URL: https://github.com/red-hat-data-services/
-      BASE_TARGET_URL: https://github.com/rpancham/
-  
-
+        target_repo: ${{ steps.set-repo.outputs.target_org_repo }}
+    # env:
+    #   BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
+    #   BASE_TARGET_URL: https://github.com/red-hat-data-services/
+      
     steps:
     - name: Set repository
       id: set-repo
       run: |
-        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
-        echo "midstream_org_repo=rpancham/${{ github.event.inputs.upstream_repo }}" >> $GITHUB_OUTPUT
-
+        if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
+          IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
+        else
+          repoName=${{ github.event.inputs.upstream_repo }}
+          upstreamOwner=""
+        fi
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.Pull_and_cherrypick }}" == "Upstream->Midstream(opendatahub-io)" ]]; then
+          echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
+          # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
+        else
+          echo "upstream_org_repo=opendatahub-io/$repoName"  >> $GITHUB_OUTPUT
+          # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
+        fi
     - name: Configure Git & install hub
       run: |
         git config --global user.name "github-actions"
@@ -62,28 +78,22 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        repository: ${{ steps.set-repo.outputs.midstream_org_repo }}
+        repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
-  
     - name: Add upstream repository & create cherry pick branch
       run: |
-
         if git merge-base --is-ancestor ${{ github.event.inputs.patch_commits }} origin/${{ github.event.inputs.target_branch }}; then
           echo "Commit already exists in the target branch."
           exit 1
         fi
-
-        git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.upstream_repo }}.git
+        git remote add upstream https://github.com/${{ steps.set-repo.outputs.upstream_org_repo }}.git
         git fetch upstream
         git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
 
     - name: Cherry-pick commits
-
       run: |
-        cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
-
          IFS=',' read -ra commit_array <<< "$commits"
           for commit in "${commit_array[@]}"; do
             if git show --no-patch --format=%P $commit | grep -q ' '; then
@@ -99,12 +109,10 @@ jobs:
       run: |
         git log -n 1 --pretty=format:"%H - %s"
         git push -f origin cherry-pick-${{ github.event.inputs.patch_commits }}
-        gh pr create --repo ${{ steps.set-repo.outputs.midstream_org_repo }} \
+        gh pr create --repo ${{ steps.set-repo.outputs.target_org_repo }} \
           --head cherry-pick-${{ github.event.inputs.patch_commits }} \
           --base ${{ github.event.inputs.target_branch }} \
           --title "Cherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}" \
           --body "$(echo -e "This is a auto genrated PR, Creating from odh-automation-serving\nCherry-pick of commits ${{ github.event.inputs.patch_commits }} into ${{ github.event.inputs.target_branch }}")"
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-
-       
