@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - 'openvinotoolkit/openvino_model_server'
+          - 'openvinotoolkit/model_server'
           - 'kserve/kserve'
           - 'kserve/modelmesh'
           - 'caikit-tgis-serving'
@@ -21,18 +21,15 @@ on:
           - 'caikit-nlp-client'
           - 'kubeflow/model-registry'
       sync_repo:
-        description: 'Select Repository sync choice'
+        description: 'Select Repository to sync'
         required: true
         type: choice
         options:
-          - 'Upstream->Midstream'
-          - 'Midstream->Downstream'
-      upstream_branch:
-        description: 'Upstream branch to pull from'
+          - 'Upstream->Midstream(opendatahub-io)'
+          - 'Midstream(opendatahub-io)->Downstream(red-hat-data-services)'
+      source_branch:
+        description: 'Source branch to pull from'
         required: true
-      midstream_branch:
-        description: 'midstream branch to pull into'
-        required: false
       target_branch:
         description: 'Target branch to pull into'
         required: true
@@ -48,16 +45,11 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
           IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
-          echo $repoName
-          echo $upstreamOwner
-
         else
-          # No delimiter in the string, assign the whole string to part1
           repoName=${{ github.event.inputs.upstream_repo }}
-          echo $repoName
           upstreamOwner=""
         fi
-        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream" ]]; then
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream(opendatahub-io)" ]]; then
           echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
           # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
           echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
@@ -66,8 +58,6 @@ jobs:
           # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
           echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
         fi
-        
-
     - name: Set git config
       run: |
           git config --global user.name "github-actions"
@@ -78,7 +68,7 @@ jobs:
         github_token: ${{ secrets.sync_upstream_token }}
         upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
         target_repository: ${{ steps.set-repo.outputs.target_org_repo }}
-        upstream_branch: ${{ github.event.inputs.upstream_branch }}
+        upstream_branch: ${{ github.event.inputs.source_branch }}
         target_branch: ${{ github.event.inputs.target_branch }}
         force: false
         tags: false
