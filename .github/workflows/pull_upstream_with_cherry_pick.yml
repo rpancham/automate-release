@@ -27,9 +27,9 @@ on:
         options:
           - 'Upstream->Midstream(opendatahub-io)'
           - 'Midstream(opendatahub-io)->Downstream(red-hat-data-services)'
-      source_branch:
-        description: 'Source branch to pull from'
-        required: true
+      # source_branch:
+      #   description: 'Source branch to pull from'
+      #   required: true
       target_branch:
         description: 'Target branch to pull into'
         required: true
@@ -47,10 +47,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs: 
         target_repo: ${{ steps.set-repo.outputs.target_org_repo }}
-    # env:
-    #   BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-    #   BASE_TARGET_URL: https://github.com/red-hat-data-services/
-      
     steps:
     - name: Set repository
       id: set-repo
@@ -80,6 +76,7 @@ jobs:
       with:
         repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+        fetch-depth: 0
 
     - name: Add upstream repository & create cherry pick branch
       run: |
@@ -94,16 +91,17 @@ jobs:
     - name: Cherry-pick commits
       run: |
         commits="${{ github.event.inputs.patch_commits }}"
-         IFS=',' read -ra commit_array <<< "$commits"
-          for commit in "${commit_array[@]}"; do
-            if git show --no-patch --format=%P $commit | grep -q ' '; then
-              echo "Cherry-picking merge commit $commit"
-              git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
-            else
-              echo "Cherry-picking regular commit $commit"
-              git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
-            fi
-          done
+        IFS=',' read -ra commit_array <<< "$commits"
+        for commit in "${commit_array[@]}"; do
+          echo "Cherry-picking merge commit $commit"
+          if git show --no-patch --format=%P $commit | grep -q ' '; then
+            echo "Cherry-picking merge commit $commit"
+            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
+          else
+            echo "Cherry-picking regular commit $commit"
+            git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
+          fi
+        done
 
     - name: Push changes to cherry pick branch & Create a PR
       run: |
