@@ -101,6 +101,10 @@ jobs:
             echo "Cherry-picking regular commit $commit"
             git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
           fi
+          if git diff-tree --quiet HEAD; then
+            echo "Commit is empty after cherry-pick, creating empty commit"
+            git commit --allow-empty -m "Empty commit after cherry-pick $commit"
+          fi
         done
 
     - name: Push changes to cherry pick branch & Create a PR
