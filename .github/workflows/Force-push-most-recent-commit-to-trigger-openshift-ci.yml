@@ -7,18 +7,18 @@ on:
         required: true
         type: choice
         options:
-          - 'openvino_model_server'
-          - 'kserve'
-          - 'modelmesh'
+          - 'openvinotoolkit/model_server'
+          - 'kserve/kserve'
+          - 'kserve/modelmesh'
           - 'caikit-tgis-serving'
-          - 'openvino'
-          - 'vllm'
-          - 'caikit-nlp'
-          - 'caikit'
+          - 'openvinotoolkit/openvino'
+          - 'vllm-project/vllm'
+          - 'caikit/caikit-nlp'
+          - 'caikit/caikit'
           - 'odh-model-controller'
-          - 'caikit-tgis-backend'
+          - 'caikit/caikit-tgis-backend'
           - 'caikit-nlp-client'
-          - 'model-registry'
+          - 'kubeflow/model-registry'
       downstream_branch:
         description: 'downstream_branch branch to Force-push the amended commit'
         required: true
@@ -38,9 +38,21 @@ jobs:
     - name: Set repository
       id: set-repo
       run: |
-        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
-        echo "downstream_org_repo=rpancham/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
-
+        if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
+          IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
+        else
+          repoName=${{ github.event.inputs.upstream_repo }}
+          upstreamOwner=""
+        fi
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream(opendatahub-io)" ]]; then
+          echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
+          # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
+        else
+          echo "upstream_org_repo=opendatahub-io/$repoName"  >> $GITHUB_OUTPUT
+          # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
+        fi
     - name: Configure Git & install hub
       run: |
         git config --global user.name "github-actions"
