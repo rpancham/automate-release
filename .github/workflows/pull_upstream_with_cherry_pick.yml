@@ -94,10 +94,10 @@ jobs:
         commits="${{ github.event.inputs.patch_commits }}"
         IFS=',' read -ra commit_array <<< "$commits"
         for commit in "${commit_array[@]}"; do
-          echo "Cherry-picking merge commit $commit"
           if git show --no-patch --format=%P $commit | grep -q ' '; then
             echo "Cherry-picking merge commit $commit"
-            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
+            git fsck
+            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && git reset --hard && git clean -fd && git cherry-pick -m 1 "$commit")
           else
             echo "Cherry-picking regular commit $commit"
             git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
