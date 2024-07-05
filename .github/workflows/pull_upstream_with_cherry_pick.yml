@@ -66,7 +66,7 @@ jobs:
           # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
           echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
         fi
-    - name: Configure Git & install hub
+    - name: Configure Git
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
