@@ -81,7 +81,6 @@ jobs:
     - name: Cherry-pick commits
 
       run: |
-        cd temp_repo
         commits="${{ github.event.inputs.patch_commits }}"
 
          IFS=',' read -ra commit_array <<< "$commits"
