@@ -84,7 +84,7 @@ jobs:
           github_token: ${{ secrets.sync_upstream_token}}
           upstream_repository: ${{ steps.set-repo.outputs.upstream_org_repo }}
           target_repository: ${{ steps.set-repo.outputs.target_org_repo }}
-          upstream_branch: ${{ github.event.inputs.upstream_branch }}
+          upstream_branch: ${{ github.event.inputs.source_branch }}
           target_branch: ${{ github.event.inputs.target_branch }}
           force: false
           tags: false
