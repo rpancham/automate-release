@@ -2,8 +2,8 @@ name: Create PR upstream with given commit(s)
 on:
   workflow_dispatch:
     inputs:
-      downstream_repo:
-        description: 'Select downstream Repository'
+      upstream_repo:
+        description: 'Select Upstream Repository'
         required: true
         type: choice
         options:
@@ -19,13 +19,14 @@ on:
           - 'caikit/caikit-tgis-backend'
           - 'caikit-nlp-client'
           - 'kubeflow/model-registry'
+          - 'rpancham/automate-release'
       create_pr:
-        description: 'Select Repository to sync'
+        description: 'Select Repository to create a PR'
         required: true
         type: choice
         options:
-           - 'Upstream->Midstream(opendatahub-io)'
-           - 'Midstream(opendatahub-io)->Downstream(red-hat-data-services)'
+           - 'Midstream(opendatahub-io)->Upstream'
+           - 'Downstream(red-hat-data-services)->Midstream(opendatahub-io)'
       upstream_branch:
         description: 'Upstream branch to create a PR'
         required: true
@@ -57,20 +58,31 @@ jobs:
   create-upstream-pr:
     runs-on: ubuntu-latest
     outputs: 
-        upstream_repo: ${{ steps.set-repo.outputs.upstream_org_repo }}
-        midstream_repo: ${{ steps.set-repo.outputs.downstream_org_repo }}
-    env:
-      BASE_UPSTREAM_URL: https://github.com/opendatahub-io/
-      # BASE_TARGET_URL: https://github.com/red-hat-data-services/
-      BASE_TARGET_URL: https://github.com/rpancham/
+        target_repo: ${{ steps.set-repo.outputs.target_org_repo }}
     steps:
     - name: Set repository
       id: set-repo
       run: |
-        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
-        echo "downstream_org_repo=rpancham/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
+        if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
+          IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
+        else
+          repoName=${{ github.event.inputs.upstream_repo }}
+          upstreamOwner=""
+        fi
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Midstream(opendatahub-io)->Upstream" ]]; then
+          echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
+          # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
+        else
+          # echo "upstream_org_repo=opendatahub-io/$repoName"  >> $GITHUB_OUTPUT
+          # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
+                    
+          echo "ownerName=Kaustubh-pande" >> $GITHUB_OUTPUT
 
-    - name: Configure Git & install hub
+          echo "upstream_org_repo=rpancham/$repoName"  >> $GITHUB_OUTPUT
+          echo "target_org_repo=Kaustubh-pande/$repoName" >> $GITHUB_OUTPUT
+        fi
+    - name: Configure Git
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
@@ -78,13 +90,13 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        repository: ${{ steps.set-repo.outputs.downstream_org_repo }}
+        repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
 
     - name: Add upstream repository & create cherry pick branch
       run: |
-        git remote add upstream ${{ env.BASE_UPSTREAM_URL }}${{ github.event.inputs.downstream_repo }}.git
+        git remote add upstream https://github.com/${{ steps.set-repo.outputs.upstream_org_repo }}.git
         git fetch upstream
         if git merge-base --is-ancestor ${{ github.event.inputs.commit_sha }} upstream/${{ github.event.inputs.upstream_branch }}; then
           echo "Commit already exists in the upstream branch."
@@ -111,7 +123,7 @@ jobs:
         git log -n 1 --pretty=format:"%H - %s"
         git push -f origin ${{ github.event.inputs.pr_branch }}
         gh pr create --repo ${{ steps.set-repo.outputs.upstream_org_repo }} \
-          --head ${{ steps.set-repo.outputs.downstream_org_repo }}:${{ github.event.inputs.pr_branch }} \
+          --head ${{ steps.set-repo.outputs.ownerName }}:${{ github.event.inputs.pr_branch }} \
           --base ${{ github.event.inputs.upstream_branch }} \
           --title "${{ github.event.inputs.pr_title }}" \
           --body "${{ github.event.inputs.pr_body }}"
