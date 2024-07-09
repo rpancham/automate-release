@@ -2,8 +2,8 @@ name: Force push most recent commit to trigger openshift-ci to rebuild images
 on:
   workflow_dispatch:
     inputs:
-      downstream_repo:
-        description: 'Select downstream Repository'
+      select_repo:
+        description: 'Select a Repository'
         required: true
         type: choice
         options:
@@ -19,10 +19,16 @@ on:
           - 'caikit-tgis-backend'
           - 'caikit-nlp-client'
           - 'model-registry'
-      downstream_branch:
+      select_branch:
         description: 'downstream_branch branch to Force-push the amended commit'
         required: true
-
+      select_midstream_or_downstream:
+        description: 'Select midstream_or_downstream Repository to Force push most recent commit'
+        required: true
+        type: choice
+        options:
+          - 'Midstream(opendatahub-io)'
+          - 'Downstream(red-hat-data-services)'
 permissions:
   contents: write
   packages: write
@@ -38,9 +44,13 @@ jobs:
     - name: Set repository
       id: set-repo
       run: |
-        echo "upstream_org_repo=opendatahub-io/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
-        echo "downstream_org_repo=rpancham/${{ github.event.inputs.downstream_repo }}" >> $GITHUB_OUTPUT
-
+        if [[ "${{ github.event.inputs.select_midstream_or_downstream }}" == "Midstream(opendatahub-io)" ]]; then
+          # echo "target_org_repo=opendatahub-io/${{ github.event.inputs.select_repo }}" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/${{ github.event.inputs.select_repo }}" >> $GITHUB_OUTPUT
+        else
+          # echo "target_org_repo=red-hat-data-services/${{ github.event.inputs.select_repo }}" >> $GITHUB_OUTPUT
+          echo "target_org_repo=rpancham/${{ github.event.inputs.select_repo }}" >> $GITHUB_OUTPUT
+        fi
     - name: Configure Git & install hub
       run: |
         git config --global user.name "github-actions"
@@ -49,12 +59,13 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        repository: ${{ steps.set-repo.outputs.downstream_org_repo }}
+        repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
     - name: Amend the last commit & Force-push the amended commit
       run: |
+        git fetch --unshallow
         git commit --amend --no-edit
-        git push --force origin ${{ github.event.inputs.downstream_branch }}
+        git push --force-with-lease origin ${{ github.event.inputs.select_branch }}
       env:
         GITHUB_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}

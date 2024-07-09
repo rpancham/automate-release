@@ -7,18 +7,25 @@ on:
         required: true
         type: choice
         options:
-          - 'openvino_model_server'
-          - 'kserve'
-          - 'modelmesh'
+          - 'openvinotoolkit/model_server'
+          - 'kserve/kserve'
+          - 'kserve/modelmesh'
           - 'caikit-tgis-serving'
-          - 'openvino'
-          - 'vllm'
-          - 'caikit-nlp'
-          - 'caikit'
+          - 'openvinotoolkit/openvino'
+          - 'vllm-project/vllm'
+          - 'caikit/caikit-nlp'
+          - 'caikit/caikit'
           - 'odh-model-controller'
-          - 'caikit-tgis-backend'
+          - 'caikit/caikit-tgis-backend'
           - 'caikit-nlp-client'
-          - 'model-registry'
+          - 'kubeflow/model-registry'
+      create_pr:
+        description: 'Select Repository to sync'
+        required: true
+        type: choice
+        options:
+           - 'Upstream->Midstream(opendatahub-io)'
+           - 'Midstream(opendatahub-io)->Downstream(red-hat-data-services)'
       upstream_branch:
         description: 'Upstream branch to create a PR'
         required: true
