@@ -65,11 +65,15 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
           IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
+          echo $upstreamOwner
+          echo $repoName
         else
           repoName=${{ github.event.inputs.upstream_repo }}
           upstreamOwner=""
+          echo $upstreamOwner
+          echo $repoName
         fi
-        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Midstream(opendatahub-io)->Upstream" ]]; then
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.create_pr }}" == "Midstream(opendatahub-io)->Upstream" ]]; then
           echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
           # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
           echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
