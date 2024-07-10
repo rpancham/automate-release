@@ -76,7 +76,7 @@ jobs:
       with:
         repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-        fetch-depth: 0
+        # fetch-depth: 0
 
     - name: Add upstream repository & create cherry pick branch
       run: |
@@ -86,10 +86,10 @@ jobs:
         fi
         git remote add upstream https://github.com/${{ steps.set-repo.outputs.upstream_org_repo }}.git
         git fetch upstream
-        # git checkout upstream/${{ github.event.inputs.source_branch }}
-        # git switch -c cherry-pick-${{ github.event.inputs.patch_commits }}
+        
+    - name: Create temporary branch from midstream
+      run: |
         git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
-
     - name: Cherry-pick commits
       run: |
         commits="${{ github.event.inputs.patch_commits }}"
@@ -97,7 +97,7 @@ jobs:
         for commit in "${commit_array[@]}"; do
           if git show --no-patch --format=%P $commit | grep -q ' '; then
             echo "Cherry-picking merge commit $commit"
-            git cherry-pick -m 2 "$commit" || (git cherry-pick --abort && exit 1)
+            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
           else
             echo "Cherry-picking regular commit $commit"
             git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
