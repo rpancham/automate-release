@@ -1,0 +1,74 @@
+name: Push Main to Release Branch Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      org:
+        description: 'Select Organization'
+        required: true
+        type: choice
+        options:
+          - 'opendatahub.io'
+          - 'red-hat-data-services'
+      sync_repo:
+        description: 'Select Repository'
+        required: true
+        type: choice
+        options:
+          - 'modelmesh'
+          - 'caikit-tgis-serving'
+          - 'openvino'
+          - 'vllm'
+          - 'caikit-nlp'
+          - 'caikit'
+          - 'odh-model-controller'
+          - 'caikit-tgis-backend'
+          - 'caikit-nlp-client'
+          - 'model-registry'
+      main_branch:
+        description: 'Main branch to pull from'
+        default: 'main'
+        required: true
+      release_branch:
+        description: 'Branch to push to [release branch]'
+        required: true
+
+env:
+  ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+
+jobs:
+  push-release-branch:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+            repository: ${{ github.event.inputs.org }}/${{ github.event.inputs.sync_repo }}
+            token: ${{ secrets.ACTIONS_PAT }}
+
+      
+      - name: Print current repository
+        run: git remote -v
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Checkout release branch
+        run: |
+          git checkout ${{ github.event.inputs.release_branch }}
+
+      - name: Rebase main onto release branch
+        run: |
+            git rebase origin/${{ github.event.inputs.main_branch }} 
+
+      - name: Push changes
+        run: |
+          git push origin ${{ github.event.inputs.release_branch }} --force
+
+             
