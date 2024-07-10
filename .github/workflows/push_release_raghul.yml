@@ -51,8 +51,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-            repository: ${{ github.event.inputs.org }}/${{ github.event.inputs.sync_repo }}
-            token: ${{ secrets.ACTIONS_PAT }}
+          repository: ${{ github.event.inputs.org }}/${{ github.event.inputs.sync_repo }}
+          token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
 
       
       - name: Print current repository
