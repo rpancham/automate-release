@@ -76,7 +76,7 @@ jobs:
       with:
         repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-        # fetch-depth: 0
+        fetch-depth: 0
 
     - name: Add upstream repository & create cherry pick branch
       run: |
