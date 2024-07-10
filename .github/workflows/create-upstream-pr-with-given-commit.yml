@@ -90,8 +90,8 @@ jobs:
           echo "Commit already exists in the upstream branch."
           exit 1
         fi
-        git checkout ${{ github.event.inputs.downstream_branch }}
-        git checkout -b ${{ github.event.inputs.pr_branch }}
+        git checkout upstream/${{ github.event.inputs.upstream_branch }}
+        git switch -c ${{ github.event.inputs.pr_branch }}
 
     - name: Cherry-pick commits
       run: |
