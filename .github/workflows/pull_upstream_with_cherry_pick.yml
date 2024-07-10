@@ -86,8 +86,9 @@ jobs:
         fi
         git remote add upstream https://github.com/${{ steps.set-repo.outputs.upstream_org_repo }}.git
         git fetch upstream
-        git checkout upstream/${{ github.event.inputs.source_branch }}
-        git switch -c cherry-pick-${{ github.event.inputs.patch_commits }}
+        # git checkout upstream/${{ github.event.inputs.source_branch }}
+        # git switch -c cherry-pick-${{ github.event.inputs.patch_commits }}
+        git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
 
     - name: Cherry-pick commits
       run: |
