@@ -96,7 +96,7 @@ jobs:
         for commit in "${commit_array[@]}"; do
           if git show --no-patch --format=%P $commit | grep -q ' '; then
             echo "Cherry-picking merge commit $commit"
-            git cherry-pick -m 2 "$commit" || (git cherry-pick --abort && exit 1)
+            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
           else
             echo "Cherry-picking regular commit $commit"
             git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
