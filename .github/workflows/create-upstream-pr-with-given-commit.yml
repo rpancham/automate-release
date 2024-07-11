@@ -20,8 +20,8 @@ on:
           - 'caikit-nlp-client'
           - 'kubeflow/model-registry'
           - 'rpancham/automate-release'
-      create_pr:
-        description: 'Select Repository to create a PR'
+      create_pr_at_upstream_or_midstream:
+        description: 'Select Upstream or Midstream to create a PR'
         required: true
         type: choice
         options:
@@ -65,15 +65,15 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.upstream_repo }}" == *"/"* ]]; then
           IFS='/' read -r upstreamOwner repoName <<< "${{ github.event.inputs.upstream_repo }}"
-          echo $upstreamOwner
-          echo $repoName
         else
           repoName=${{ github.event.inputs.upstream_repo }}
           upstreamOwner=""
-          echo $upstreamOwner
-          echo $repoName
         fi
-        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.create_pr }}" == "Midstream(opendatahub-io)->Upstream" ]]; then
+        if [[ "$repoName" == "model_server" ]]; then
+          repoName=""openvino_"$repoName"
+        fi
+        
+        if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.create_pr_at_upstream_or_midstream }}" == "Midstream(opendatahub-io)->Upstream" ]]; then
           echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
           # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
           echo "target_org_repo=rpancham/$repoName" >> $GITHUB_OUTPUT
@@ -82,7 +82,6 @@ jobs:
           # echo "target_org_repo=red-hat-data-services/$repoName" >> $GITHUB_OUTPUT
                     
           echo "ownerName=Kaustubh-pande" >> $GITHUB_OUTPUT
-
           echo "upstream_org_repo=rpancham/$repoName"  >> $GITHUB_OUTPUT
           echo "target_org_repo=Kaustubh-pande/$repoName" >> $GITHUB_OUTPUT
         fi
@@ -96,7 +95,7 @@ jobs:
       with:
         repository: ${{ steps.set-repo.outputs.target_org_repo }}
         token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
-
+        fetch-depth: 0
 
     - name: Add upstream repository & create cherry pick branch
       run: |
@@ -106,8 +105,8 @@ jobs:
           echo "Commit already exists in the upstream branch."
           exit 1
         fi
-        git checkout ${{ github.event.inputs.downstream_branch }}
-        git checkout -b ${{ github.event.inputs.pr_branch }}
+        git checkout upstream/${{ github.event.inputs.upstream_branch }}
+        git switch -c ${{ github.event.inputs.pr_branch }}
 
     - name: Cherry-pick commits
       run: |
