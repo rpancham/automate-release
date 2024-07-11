@@ -28,10 +28,10 @@ on:
            - 'Midstream(opendatahub-io)->Upstream'
            - 'Downstream(red-hat-data-services)->Midstream(opendatahub-io)'
       upstream_branch:
-        description: 'Upstream branch to create a PR'
+        description: 'select Upstream branch to create a PR'
         required: true
       downstream_branch:
-        description: 'downstream_branch branch to cherry pick commit'
+        description: 'select downstream branch'
         required: true
       commit_sha:
         description: 'Comma-separated list of commit SHAs to cherry-pick'
@@ -105,9 +105,12 @@ jobs:
           echo "Commit already exists in the upstream branch."
           exit 1
         fi
+       
+    - name: Create temporary branch
+      run: |
         git checkout upstream/${{ github.event.inputs.upstream_branch }}
         git switch -c ${{ github.event.inputs.pr_branch }}
-
+  
     - name: Cherry-pick commits
       run: |
         commits="${{ github.event.inputs.commit_sha }}"
