@@ -49,6 +49,10 @@ jobs:
           repoName=${{ github.event.inputs.upstream_repo }}
           upstreamOwner=""
         fi
+        if [[ "$repoName" == "model_server" ]]; then
+          repoName=""openvino_"$repoName"
+          echo $repoName
+        fi
         if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.sync_repo }}" == "Upstream->Midstream(opendatahub-io)" ]]; then
           echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
           # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
