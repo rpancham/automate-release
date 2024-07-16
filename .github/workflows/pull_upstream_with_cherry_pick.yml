@@ -57,6 +57,9 @@ jobs:
           repoName=${{ github.event.inputs.upstream_repo }}
           upstreamOwner=""
         fi
+        if [[ "$repoName" == "model_server" ]]; then
+          repoName=""openvino_"$repoName"
+        fi
         if [ -n "$upstreamOwner" ] && [[ "${{ github.event.inputs.Pull_and_cherrypick }}" == "Upstream->Midstream(opendatahub-io)" ]]; then
           echo "upstream_org_repo=${{ github.event.inputs.upstream_repo }}"  >> $GITHUB_OUTPUT
           # echo "target_org_repo=opendatahub-io/$repoName" >> $GITHUB_OUTPUT
@@ -86,9 +89,11 @@ jobs:
         fi
         git remote add upstream https://github.com/${{ steps.set-repo.outputs.upstream_org_repo }}.git
         git fetch upstream
-        git checkout upstream/${{ github.event.inputs.source_branch }}
-        git switch -c cherry-pick-${{ github.event.inputs.patch_commits }}
-
+        
+    - name: Create temporary branch from midstream
+      run: |
+        git checkout origin/${{ github.event.inputs.target_branch }}
+        git checkout -b cherry-pick-${{ github.event.inputs.patch_commits }}
     - name: Cherry-pick commits
       run: |
         commits="${{ github.event.inputs.patch_commits }}"
@@ -96,12 +101,10 @@ jobs:
         for commit in "${commit_array[@]}"; do
           if git show --no-patch --format=%P $commit | grep -q ' '; then
             echo "Cherry-picking merge commit $commit"
-            git fsck
-            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && git reset --hard && git clean -fd && git cherry-pick -m 1 "$commit")
+            git cherry-pick -m 1 "$commit" || (git cherry-pick --abort && exit 1)
           else
             echo "Cherry-picking regular commit $commit"
-            git fsck
-            git cherry-pick "$commit" || (git cherry-pick --abort && git reset --hard && git clean -fd && git cherry-pick "$commit")
+            git cherry-pick "$commit" || (git cherry-pick --abort && exit 1)
           fi
          
         done
