@@ -75,7 +75,7 @@ jobs:
 
       - name: Merge main into release
         run: |
-          git merge origin/main
+          git merge origin/${{ github.event.inputs.main_branch }}
 
       - name: Push changes to release branch & Create a PR
         run: |
