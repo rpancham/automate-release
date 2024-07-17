@@ -8,6 +8,7 @@ on:
         required: true
         type: choice
         options:
+          - 'Kaustubh-pande'
           - 'opendatahub.io'
           - 'red-hat-data-services'
           - 'rpancham'
@@ -19,6 +20,7 @@ on:
           - 'modelmesh'
           - 'caikit-tgis-serving'
           - 'openvino'
+          - 'automate-release'
           - 'vllm'
           - 'caikit-nlp'
           - 'caikit'
@@ -59,7 +61,6 @@ jobs:
             repository: ${{ github.event.inputs.org }}/${{ github.event.inputs.sync_repo }}
             token: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
             fetch-depth: 0
-
       
       - name: Print current repository
         run: git remote -v
