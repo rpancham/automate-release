@@ -1,4 +1,4 @@
-name: Push Main to Release Branch Sync
+name: Main branch to Release Branch Sync PR
 
 on:
   workflow_dispatch:
@@ -36,6 +36,12 @@ on:
 env:
   ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
+permissions:
+  # Need `contents: read` to checkout the repository
+  # Need `contents: write` to merge branches
+  contents: write
+  
+
 jobs:
   push-release-branch:
     runs-on: ubuntu-latest
@@ -51,6 +57,7 @@ jobs:
         with:
             repository: ${{ github.event.inputs.org }}/${{ github.event.inputs.sync_repo }}
             token: ${{ secrets.ACTIONS_PAT }}
+            fetch-depth: 0
 
       
       - name: Print current repository
@@ -59,16 +66,22 @@ jobs:
       - name: Fetch all branches
         run: git fetch --all
 
-      - name: Checkout release branch
+      - name: Check out release branch
         run: |
           git checkout ${{ github.event.inputs.release_branch }}
+          git fetch origin
 
-      - name: Rebase main onto release branch
+      - name: Merge main into release
         run: |
-            git rebase origin/${{ github.event.inputs.main_branch }} 
+          git merge origin/main
 
-      - name: Push changes
+      - name: Push changes to release branch & Create a PR
         run: |
-          git push origin ${{ github.event.inputs.release_branch }} --force
-
-             
+            git push origin ${{ github.event.inputs.release_branch }}
+            gh pr create --repo ${{ github.event.inputs.org }}/${{ github.event.inputs.sync_repo }} \
+            --head ${{ github.event.inputs.release_branch }} \
+            --base ${{ github.event.inputs.main_branch }} \
+            --title "Sync changes from ${{ github.event.inputs.main_branch }} to ${{ github.event.inputs.release_branch }}" \
+            --body "This is an automated PR created by the GitHub Action to sync changes from the main branch to the release branch."
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_PAT }}            
