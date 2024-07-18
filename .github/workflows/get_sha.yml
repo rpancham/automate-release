@@ -2,7 +2,29 @@ name: Get Image SHAs from Quay.io
 
 on:
   workflow_dispatch:
-
+    inputs:
+      organizations:
+        description: 'Select Organizations'
+        required: true
+        type: choice
+        options:
+          - 'opendatahub'
+          - 'modh'
+      repository:
+        description: 'Select Repository'
+        required: true
+        type: choice
+        options:
+          - 'odh-model-controller'
+          - 'caikit-tgis-serving'
+          - 'caikit-nlp'
+          - 'text-generation-inference'
+          - 'openvino_model_server'
+          - 'vllm'
+      tag_Name:
+        description: 'add tag Name to fetch its latest SHA'
+        required: true
+      
 jobs:
   get-shas:
     runs-on: ubuntu-latest
@@ -29,18 +51,11 @@ jobs:
           QUAY_IO_USERNAME: ${{ secrets.QUAY_USERNAME }}
           QUAY_IO_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
         run: |
-          repositories=(
-            "opendatahub/kserve-controller:fast"
-            "opendatahub/openvino_model_server:stable"
-          )
-          
-          for repo in "${repositories[@]}"; do
-            echo "Retrieving SHAs for $repo"
-            output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://quay.io/$repo")
-            if [ $? -ne 0 ]; then
-              echo "Failed to retrieve manifest for $repo"
-              continue
-            fi
-            sha=$(echo "$output" | jq -r '.Digest')
-            echo "SHA for $repo: $sha"
-          done
+          imageName="quay.io/${{ github.event.inputs.organizations }}/${{ github.event.inputs.repository }}:${{ github.event.inputs.tag_Name }}"
+          output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://$imageName")
+          if [ $? -ne 0 ]; then
+            echo "Failed to retrieve manifest for $repo"
+            continue
+          fi
+          sha=$(echo "$output" | jq -r '.Digest')
+          echo "SHA for $imageName: $sha"
