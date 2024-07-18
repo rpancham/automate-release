@@ -58,4 +58,5 @@ jobs:
             continue
           fi
           sha=$(echo "$output" | jq -r '.Digest')
-          echo "### Latest SHA for ${{ github.event.inputs.tag_Name }} is \nquay.io/${{ github.event.inputs.organizations }}/${{ github.event.inputs.repository }}:$sha" >> $GITHUB_STEP_SUMMARY
+          SUMMARY=$'# Latest SHA for ${{ github.event.inputs.tag_Name }} tag is \n ## quay.io/${{ github.event.inputs.organizations }}/${{ github.event.inputs.repository }}:$sha'
+          echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
