@@ -59,6 +59,8 @@ jobs:
           QUAY_IO_USERNAME: ${{ secrets.QUAY_USERNAME }}
           QUAY_IO_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
         run: |
+          #!/bin/bash
+          set +e
           repositories=(
             "odh-model-controller"
             "caikit-tgis-serving"
