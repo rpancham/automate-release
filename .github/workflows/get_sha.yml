@@ -72,8 +72,15 @@ jobs:
             echo "Retrieving SHAs for $repo"
             imageName="quay.io/${{ github.event.inputs.organizations }}/$repo:${{ github.event.inputs.tag_Name }}"
             output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://$imageName")
+            
             if [ $? -ne 0 ]; then
-              echo "Failed to retrieve manifest for $repo"
+              if echo "$output" | grep -q "manifest unknown"; then
+                echo "No image for tag 'latest' in $repo"
+                imageOutput="$imageOutput ## No image for tag ${{ github.event.inputs.tag_Name }} in $repo\n"
+              else
+                echo "Failed to retrieve manifest for $repo: $output"
+                imageOutput="$imageOutput ## Failed to retrieve manifest for $repo: $output\n"
+              fi
               continue
             fi
             sha=$(echo "$output" | jq -r '.Digest')
