@@ -77,7 +77,7 @@ jobs:
               continue
             fi
             sha=$(echo "$output" | jq -r '.Digest')
-            imageOutput="$imageOutputquay.io/${{ github.event.inputs.organizations }}/$repo@$sha\n"
+            imageOutput="$imageOutput quay.io/${{ github.event.inputs.organizations }}/$repo@$sha\n"
           done
           imageOutput=$(echo | sed "i$imageOutput")
           SUMMARY=$'# Latest SHA for ${{ github.event.inputs.tag_Name }} tag is \n ## '$imageOutput
