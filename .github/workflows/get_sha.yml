@@ -10,9 +10,17 @@ on:
         options:
           - 'opendatahub'
           - 'modh'
-      repository:
-        description: 'Select Repository'
+      operation:
+        description: 'Choose single repo or all repos'
         required: true
+        type: choice
+        default: 'all'
+        options:
+          - 'all'
+          - 'single'
+      repository:
+        description: 'Select Repository (required if single operation)'
+        required: false
         type: choice
         options:
           - 'odh-model-controller'
@@ -51,12 +59,26 @@ jobs:
           QUAY_IO_USERNAME: ${{ secrets.QUAY_USERNAME }}
           QUAY_IO_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
         run: |
-          imageName="quay.io/${{ github.event.inputs.organizations }}/${{ github.event.inputs.repository }}:${{ github.event.inputs.tag_Name }}"
-          output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://$imageName")
-          if [ $? -ne 0 ]; then
-            echo "Failed to retrieve manifest for $repo"
-            continue
-          fi
-          sha=$(echo "$output" | jq -r '.Digest')
-          SUMMARY=$'# Latest SHA for ${{ github.event.inputs.tag_Name }} tag is \n ## quay.io/${{ github.event.inputs.organizations }}/${{ github.event.inputs.repository }}@'$sha
+          repositories=(
+            "odh-model-controller"
+            "caikit-tgis-serving"
+            "caikit-nlp"
+            "text-generation-inference"
+            "openvino_model_server"
+            "vllm"
+          )
+          imageOutput=""
+          for repo in "${repositories[@]}"; do
+            echo "Retrieving SHAs for $repo"
+            imageName="quay.io/${{ github.event.inputs.organizations }}/$repo:${{ github.event.inputs.tag_Name }}"
+            output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://$imageName")
+            if [ $? -ne 0 ]; then
+              echo "Failed to retrieve manifest for $repo"
+              continue
+            fi
+            sha=$(echo "$output" | jq -r '.Digest')
+            imageOutput="$imageOutput\n## quay.io/${{ github.event.inputs.organizations }}/$repo@$sha"
+          done
+          SUMMARY=$'# Latest SHA for ${{ github.event.inputs.tag_Name }} tag is \n ## $imageOutput'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
+          
