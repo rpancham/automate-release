@@ -79,6 +79,6 @@ jobs:
             sha=$(echo "$output" | jq -r '.Digest')
             imageOutput="$imageOutput\n## quay.io/${{ github.event.inputs.organizations }}/$repo@$sha"
           done
-          SUMMARY=$'# Latest SHA for ${{ github.event.inputs.tag_Name }} tag is \n ## $imageOutput'
+          SUMMARY=$'# Latest SHA for ${{ github.event.inputs.tag_Name }} tag is \n ## '$imageOutput
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
           
