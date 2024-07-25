@@ -71,7 +71,7 @@ jobs:
           for repo in "${repositories[@]}"; do
             echo "Retrieving SHAs for $repo"
             imageName="quay.io/${{ github.event.inputs.organizations }}/$repo:${{ github.event.inputs.tag_Name }}"
-            output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://$imageName")
+            output=$(skopeo inspect --creds "${QUAY_IO_USERNAME}:${QUAY_IO_PASSWORD}" "docker://$imageName" 2>&1)
             
             if [ $? -ne 0 ]; then
               if echo "$output" | grep -q "manifest unknown"; then
