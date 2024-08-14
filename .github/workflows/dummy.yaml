@@ -1,4 +1,4 @@
-name: Sync new Repo
+name: Sync new Repo dummy
 on:
   push:
     paths:
